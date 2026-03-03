@@ -1,0 +1,7 @@
+name: Grails Turbo Plugin
+grailsVersion: 6.0.0 > *
+title: Grails Turbo
+author: Grails Community
+description: Hotwired Turbo integration for Grails applications
+license: Apache-2.0
+

@@ -1,0 +1,41 @@
+# Grails Turbo Plugin Configuration
+
+# Configuration for the Grails Turbo plugin
+# Add this to your application.yml to customize behavior
+
+grails:
+    turbo:
+        # Version of Turbo JavaScript library to use
+        turboVersion: '8.0.4'
+
+        # Automatically include Turbo JavaScript in all pages
+        autoInclude: true
+
+        # Use CDN for Turbo JavaScript (if false, you need to provide your own)
+        useCdn: true
+
+        # CDN URL for Turbo JavaScript
+        cdnUrl: 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'
+
+        # Enable Turbo Drive (automatic page navigation)
+        enableDrive: true
+
+        # Enable Turbo Frames (lazy-loading and scoped updates)
+        enableFrames: true
+
+        # Enable Turbo Streams (real-time updates)
+        enableStreams: true
+
+        # Custom meta options (optional)
+        # metaOptions:
+        #   turbo-cache-control: 'no-cache'
+        #   turbo-prefetch: 'true'
+
+# MIME type registration for Turbo Streams
+---
+grails:
+    mime:
+        types:
+            turbo_stream:
+                - text/vnd.turbo-stream.html
+
