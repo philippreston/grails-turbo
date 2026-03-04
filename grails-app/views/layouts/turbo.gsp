@@ -11,8 +11,8 @@
 
     <asset:stylesheet src="application.css"/>
 
-    <!-- Turbo Drive configuration -->
-    <meta name="turbo-cache-control" content="no-cache">
+    <!-- Turbo JavaScript - loaded via tag library with configuration support -->
+    <turbo:includeTurbo/>
 
     <g:layoutHead/>
 </head>

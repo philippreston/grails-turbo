@@ -28,7 +28,9 @@ Provides helper methods for controllers:
 GSP tag library for Turbo elements:
 - `turbo:frame` - Create Turbo Frames
 - `turbo:stream` - Create Turbo Stream elements
-- `turbo:includeTurbo` - Include Turbo JavaScript
+- `turbo:includeTurbo` - Include Turbo JavaScript from CDN (uses TurboConfig)
+
+**Note:** Turbo JavaScript is loaded via the `<turbo:includeTurbo>` tag, NOT through the asset pipeline. This gives you full control over version, CDN URL, and when Turbo is loaded.
 
 #### 5. TurboInterceptor
 Request interceptor that:

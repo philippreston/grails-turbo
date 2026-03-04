@@ -49,16 +49,47 @@ over HTTP and WebSocket connections.
     ]
 
     Closure doWithSpring() { {->
+        // Register configuration
+        turboConfig(TurboConfig)
+
         // Register TurboStreamService
         turboStreamService(TurboStreamService) { bean ->
             bean.autowire = true
         }
-
-        // Register configuration
-        turboConfig(TurboConfig)
     }}
 
     void doWithApplicationContext() {
+        // Apply configuration from application.yml
+        def config = grailsApplication.config.getProperty('grails.plugin.turbo', Map)
+        if (config) {
+            def turboConfig = applicationContext.getBean('turboConfig', TurboConfig)
+
+            if (config.containsKey('turboVersion')) {
+                turboConfig.turboVersion = config.turboVersion
+            }
+            if (config.containsKey('autoInclude')) {
+                turboConfig.autoInclude = config.autoInclude as boolean
+            }
+            if (config.containsKey('useCdn')) {
+                turboConfig.useCdn = config.useCdn as boolean
+            }
+            if (config.containsKey('cdnUrl')) {
+                turboConfig.cdnUrl = config.cdnUrl
+            }
+            if (config.containsKey('enableDrive')) {
+                turboConfig.enableDrive = config.enableDrive as boolean
+            }
+            if (config.containsKey('enableFrames')) {
+                turboConfig.enableFrames = config.enableFrames as boolean
+            }
+            if (config.containsKey('enableStreams')) {
+                turboConfig.enableStreams = config.enableStreams as boolean
+            }
+            if (config.containsKey('metaOptions')) {
+                turboConfig.metaOptions = config.metaOptions as Map<String, String>
+            }
+        }
+
         // Register Turbo Stream MIME type
         try {
             def mimeTypes = grailsApplication.config.getProperty('grails.mime.types', Map)

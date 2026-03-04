@@ -1,6 +1,7 @@
 package grails.turbo
 
 import grails.artefact.TagLibrary
+import grails.turbo.config.TurboConfig
 
 /**
  * Tag library for Hotwired Turbo support.
@@ -9,6 +10,8 @@ import grails.artefact.TagLibrary
 class TurboTagLib implements TagLibrary {
 
     static namespace = "turbo"
+
+    TurboConfig turboConfig
 
     /**
      * Creates a turbo-frame tag.
@@ -130,10 +133,28 @@ class TurboTagLib implements TagLibrary {
 
     /**
      * Include Turbo JavaScript library.
+     * Uses configuration from TurboConfig if available.
+     *
+     * @attr version - Turbo version to use (overrides config)
+     * @attr cdnUrl - CDN URL to use (overrides config)
      */
     Closure includeTurbo = { attrs ->
-        String version = attrs.version ?: '8.0.4'
-        out << "<script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@hotwired/turbo@${version}/dist/turbo.es2017-esm.js\"></script>"
+        String version = attrs.version ?: turboConfig?.turboVersion ?: '8.0.4'
+        String cdnUrl = attrs.cdnUrl ?: turboConfig?.cdnUrl ?: 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'
+
+        out << "<script type=\"module\" src=\"${cdnUrl}@${version}/dist/turbo.es2017-esm.js\"></script>"
+
+        // Add meta tags from configuration
+        if (turboConfig?.metaOptions) {
+            turboConfig.metaOptions.each { key, value ->
+                out << "<meta name=\"turbo-${key}\" content=\"${value}\">"
+            }
+        }
+
+        // Add Drive configuration if disabled
+        if (turboConfig && !turboConfig.enableDrive) {
+            out << "<meta name=\"turbo-visit-control\" content=\"reload\">"
+        }
     }
 }
 
