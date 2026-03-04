@@ -25,10 +25,13 @@
 
     <div class="row">
         <div class="col-md-8">
-            <h2>Messages <span id="message-count" class="badge badge-secondary">${Message.count()}</span></h2>
+            <h2>Messages <span id="message-count" class="badge badge-secondary">${messageCount ?: 0}</span></h2>
 
             <!-- Turbo Frame for messages list -->
             <turbo:frame id="messages">
+                <g:if test="${!messages}">
+                    <div id="empty-message" class="alert alert-warning">No messages yet. Create one using the form on the right.</div>
+                </g:if>
                 <div id="messages-list">
                     <g:each in="${messages}" var="message">
                         <g:render template="message" model="[message: message]"/>

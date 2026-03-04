@@ -11,6 +11,38 @@ import org.springframework.web.context.request.RequestContextHolder
 trait TurboController {
 
     /**
+     * Injected groovyPageRenderer service for rendering templates to strings.
+     * This is automatically available to all controllers implementing this trait.
+     */
+    abstract def getGroovyPageRenderer()
+
+    /**
+     * Render a template to a string for use in Turbo Streams.
+     * This method uses groovyPageRenderer which works reliably in all contexts.
+     *
+     * @param templatePath The template path (e.g., 'message' for _message.gsp)
+     * @param model The model map to pass to the template
+     * @return String containing the rendered HTML
+     */
+    String renderTemplate(String templatePath, Map model) {
+        try {
+            // Determine the controller path from the controller name
+            def controllerPath = this.class.simpleName.replaceAll('Controller$', '').toLowerCase()
+
+            // Use groovyPageRenderer to render template to string
+            def result = groovyPageRenderer.render(
+                template: "/${controllerPath}/${templatePath}",
+                model: model
+            )
+            return result ?: ""
+        } catch (Exception e) {
+            // Log error but don't fail the request
+            println "Error rendering template ${templatePath}: ${e.message}"
+            return ""
+        }
+    }
+
+    /**
      * Get the current Turbo request wrapper.
      */
     TurboRequest getTurboRequest() {
@@ -54,14 +86,22 @@ trait TurboController {
     void renderTurboStream(@DelegatesTo(TurboStreamBuilder) Closure closure) {
         TurboStreamBuilder builder = new TurboStreamBuilder()
         closure.delegate = builder
-        closure.resolveStrategy = Closure.DELEGATE_FIRST
+        closure.resolveStrategy = Closure.OWNER_FIRST  // Changed from DELEGATE_FIRST to allow controller method access
         closure.call(builder)
 
         GrailsWebRequest webRequest = (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
         def response = webRequest.getCurrentResponse()
         response.setContentType(TurboConstants.TURBO_STREAM_MIME_TYPE)
         response.setCharacterEncoding("UTF-8")
-        response.getWriter().write(builder.build())
+
+        // Write the Turbo Stream response
+        def writer = response.getWriter()
+        writer.write(builder.build())
+        writer.flush()
+
+        // Mark the response as committed so Grails doesn't try to render a view
+        response.flushBuffer()
+        webRequest.renderView = false
     }
 
     /**
@@ -80,13 +120,12 @@ trait TurboController {
     void respondWithTurbo(Closure closure) {
         def formats = [:] as Map<String, Closure>
 
-        // Create a DSL for defining format handlers using a map
-        def formatBuilder = [
-            html: { Closure handler -> formats['html'] = handler },
-            turboStream: { Closure handler -> formats['turbo_stream'] = handler },
-            json: { Closure handler -> formats['json'] = handler },
-            xml: { Closure handler -> formats['xml'] = handler }
-        ]
+        // Create an Expando to handle format methods dynamically
+        def formatBuilder = new Expando()
+        formatBuilder.html = { Closure handler -> formats['html'] = handler }
+        formatBuilder.turboStream = { Closure handler -> formats['turbo_stream'] = handler }
+        formatBuilder.json = { Closure handler -> formats['json'] = handler }
+        formatBuilder.xml = { Closure handler -> formats['xml'] = handler }
 
         closure.delegate = formatBuilder
         closure.resolveStrategy = Closure.DELEGATE_FIRST

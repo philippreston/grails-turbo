@@ -1,5 +1,6 @@
 package grails.turbo.example
 
+import grails.gorm.transactions.Transactional
 import grails.turbo.TurboController
 
 /**
@@ -8,9 +9,23 @@ import grails.turbo.TurboController
  */
 class ExampleController implements TurboController {
 
+    def groovyPageRenderer
+
+
     def index() {
-        // Simple index action
-        [messages: Message.list()]
+        // Simple index action with safe handling
+        def messages = []
+        def messageCount = 0
+
+        try {
+            messages = Message.list() ?: []
+            messageCount = Message.count() ?: 0
+        } catch (Exception e) {
+            log.warn("Could not load messages: ${e.message}")
+            // Return empty list if Message domain is not available
+        }
+
+        [messages: messages, messageCount: messageCount]
     }
 
     /**
@@ -53,6 +68,7 @@ class ExampleController implements TurboController {
     /**
      * Create a new message and respond with a Turbo Stream to append it to the list.
      */
+    @Transactional
     def create() {
         def message = new Message(params)
 
@@ -64,14 +80,21 @@ class ExampleController implements TurboController {
                     redirect action: 'list'
                 }
                 turboStream {
+                    // Remove the empty state message if this is the first message
+                    if (Message.count() == 1) {
+                        remove 'empty-message'
+                    }
                     // Append the new message to the list
-                    append 'messages', render(template: 'message', model: [message: message])
+                    def messageHtml = renderTemplate('message', [message: message])
+                    append 'messages-list', messageHtml
                     // Update the message count
-                    update 'message-count', "${Message.count()}"
+                    update 'message-count', "${Message.count() ?: 0}"
                     // Clear the form
-                    update 'message-form', render(template: 'form', model: [message: new Message()])
+                    def formHtml = renderTemplate('form', [message: new Message()])
+                    update 'message-form', formHtml
                 }
             }
+            return  // ← Added this to prevent default view rendering
         } else {
             respondWithTurbo {
                 html {
@@ -79,15 +102,18 @@ class ExampleController implements TurboController {
                 }
                 turboStream {
                     // Update the form with errors
-                    update 'message-form', render(template: 'form', model: [message: message])
+                    def formHtml = renderTemplate('form', [message: message])
+                    update 'message-form', formHtml
                 }
             }
+            return  // ← Added this to prevent default view rendering
         }
     }
 
     /**
      * Update a message and respond with a Turbo Stream to replace it.
      */
+    @Transactional
     def update(Long id) {
         def message = Message.get(id)
 
@@ -106,7 +132,8 @@ class ExampleController implements TurboController {
                 }
                 turboStream {
                     // Replace the message in the list
-                    replace "message_${message.id}", render(template: 'message', model: [message: message])
+                    def messageHtml = renderTemplate('message', [message: message])
+                    replace "message_${message.id}", messageHtml
                 }
             }
         } else {
@@ -115,7 +142,8 @@ class ExampleController implements TurboController {
                     render view: 'edit', model: [message: message]
                 }
                 turboStream {
-                    update "message_${message.id}", render(template: 'form', model: [message: message])
+                    def formHtml = renderTemplate('form', [message: message])
+                    update "message_${message.id}", formHtml
                 }
             }
         }
@@ -124,6 +152,7 @@ class ExampleController implements TurboController {
     /**
      * Delete a message and respond with a Turbo Stream to remove it.
      */
+    @Transactional
     def delete(Long id) {
         def message = Message.get(id)
 
@@ -143,7 +172,7 @@ class ExampleController implements TurboController {
                 // Remove the message from the list
                 remove "message_${message.id}"
                 // Update the message count
-                update 'message-count', "${Message.count()}"
+                update 'message-count', "${Message.count() ?: 0}"
             }
         }
     }
