@@ -58,13 +58,6 @@ over HTTP and WebSocket connections.
         turboConfig(TurboConfig)
     }}
 
-    void doWithDynamicMethods() {
-        // Add turbo-related methods to controllers
-        grailsApplication.controllerClasses?.each { controllerClass ->
-            addTurboMethods(controllerClass.clazz)
-        }
-    }
-
     void doWithApplicationContext() {
         // Register Turbo Stream MIME type
         try {
@@ -78,15 +71,8 @@ over HTTP and WebSocket connections.
     }
 
     void onChange(Map<String, Object> event) {
-        if (event.source) {
-            try {
-                if (grailsApplication.isControllerClass(event.source)) {
-                    addTurboMethods(event.source as Class)
-                }
-            } catch (Exception e) {
-                log.debug("Could not add Turbo methods to changed class: ${e.message}")
-            }
-        }
+        // Controller reloading is handled by Grails
+        // TurboController trait methods are available automatically
     }
 
     void onConfigChange(Map<String, Object> event) {
@@ -95,35 +81,5 @@ over HTTP and WebSocket connections.
 
     void onShutdown(Map<String, Object> event) {
         // Cleanup if needed
-    }
-
-    /**
-     * Add Turbo helper methods to controller classes.
-     */
-    private void addTurboMethods(Class controllerClass) {
-        // Add getTurboRequest method
-        controllerClass.metaClass.getTurboRequest = {->
-            return new TurboRequest(delegate.request)
-        }
-
-        // Add isTurboRequest method
-        controllerClass.metaClass.isTurboRequest = {->
-            return delegate.getTurboRequest().isTurboRequest()
-        }
-
-        // Add isTurboFrameRequest method
-        controllerClass.metaClass.isTurboFrameRequest = {->
-            return delegate.getTurboRequest().isTurboFrameRequest()
-        }
-
-        // Add getTurboFrameId method
-        controllerClass.metaClass.getTurboFrameId = {->
-            return delegate.getTurboRequest().getTurboFrameId()
-        }
-
-        // Add acceptsTurboStream method
-        controllerClass.metaClass.acceptsTurboStream = {->
-            return delegate.getTurboRequest().acceptsTurboStream()
-        }
     }
 }
