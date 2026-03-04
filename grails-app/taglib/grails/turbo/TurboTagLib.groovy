@@ -27,6 +27,7 @@ class TurboTagLib implements TagLibrary {
             throwTagError("Tag [frame] is missing required attribute [id]")
         }
 
+        out << "<!-- Turbo Frame: ${id} -->"
         out << "<turbo-frame id=\"${id}\""
 
         if (attrs.src) {

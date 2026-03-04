@@ -16,11 +16,11 @@
     });
 
     document.addEventListener('turbo:before-fetch-request', function(event) {
-        // Add any custom headers or behavior before fetch
+        console.log('Turbo fetch:', event.detail.url.href);
     });
 
-    document.addEventListener('turbo:submit-end', function(event) {
-        // Handle form submission completion
+    document.addEventListener('turbo:frame-load', function(event) {
+        console.log('Turbo frame loaded:', event.target.id);
     });
 })();
 

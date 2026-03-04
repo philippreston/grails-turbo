@@ -53,16 +53,18 @@
     <div class="row mt-4">
         <div class="col-md-12">
             <h2>Lazy-Loaded Frame Example</h2>
+            <p class="text-muted">This frame loads its content asynchronously after a 1-second delay when it comes into view.</p>
 
             <!-- This frame will lazy-load its content -->
             <turbo:frame
                 id="lazy-content"
-                src="${createLink(controller: 'example', action: 'lazyLoad', params: [id: 1])}"
-                loading="lazy">
+                src="${createLink(controller: 'example', action: 'lazyLoad', params: messages ? [id: messages[0].id] : [:])}"
+                loading="eager">
                 <div class="text-center p-4">
                     <div class="spinner-border" role="status">
                         <span class="sr-only">Loading...</span>
                     </div>
+                    <p class="mt-2">Loading content...</p>
                 </div>
             </turbo:frame>
         </div>

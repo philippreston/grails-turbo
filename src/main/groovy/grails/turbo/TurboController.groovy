@@ -10,6 +10,7 @@ import org.springframework.web.context.request.RequestContextHolder
  */
 trait TurboController {
 
+    // FIXME - make this work without requiring the controller to define a groovyPageRenderer property
     /**
      * Injected groovyPageRenderer service for rendering templates to strings.
      * This is automatically available to all controllers implementing this trait.

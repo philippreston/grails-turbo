@@ -183,8 +183,23 @@ class ExampleController implements TurboController {
     def lazyLoad(Long id) {
         sleep(1000) // Simulate slow loading
 
-        def message = Message.get(id)
-        render template: 'messageDetails', model: [message: message]
+        def message = id ? Message.get(id) : Message.first()
+
+        // Response must be wrapped in a turbo-frame tag with matching ID
+        if (message) {
+            def content = renderTemplate('messageDetails', [message: message])
+            render(text: """<turbo-frame id="lazy-content">${content}</turbo-frame>""", contentType: 'text/html')
+        } else {
+            render(text: """
+                <turbo-frame id="lazy-content">
+                    <div class="alert alert-info">
+                        <h5>Lazy-Loading Example</h5>
+                        <p>This frame would normally load detailed content for a message after a 1-second delay.</p>
+                        <p>Create a message first to see this in action!</p>
+                    </div>
+                </turbo-frame>
+            """, contentType: 'text/html')
+        }
     }
 
     protected void notFound() {
