@@ -15,12 +15,6 @@ class TurboConfig {
     String turboVersion = '8.0.4'
 
     /**
-     * Whether to automatically include Turbo JavaScript in all pages.
-     * Default: true
-     */
-    boolean autoInclude = true
-
-    /**
      * Whether to use CDN for Turbo JavaScript.
      * Default: true
      */

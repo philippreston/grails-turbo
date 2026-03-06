@@ -67,9 +67,6 @@ over HTTP and WebSocket connections.
             if (config.containsKey('turboVersion')) {
                 turboConfig.turboVersion = config.turboVersion
             }
-            if (config.containsKey('autoInclude')) {
-                turboConfig.autoInclude = config.autoInclude as boolean
-            }
             if (config.containsKey('useCdn')) {
                 turboConfig.useCdn = config.useCdn as boolean
             }

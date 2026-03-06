@@ -139,10 +139,12 @@ class TurboTagLib implements TagLibrary {
      * @attr cdnUrl - CDN URL to use (overrides config)
      */
     Closure includeTurbo = { attrs ->
-        String version = attrs.version ?: turboConfig?.turboVersion ?: '8.0.4'
-        String cdnUrl = attrs.cdnUrl ?: turboConfig?.cdnUrl ?: 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'
+        String version = attrs.version ?: turboConfig?.turboVersion
+        String cdnUrl = attrs.cdnUrl ?: turboConfig?.cdnUrl
 
-        out << "<script type=\"module\" src=\"${cdnUrl}@${version}/dist/turbo.es2017-esm.js\"></script>"
+        if(turboConfig.useCdn) {
+            out << "<script type=\"module\" src=\"${cdnUrl}@${version}/dist/turbo.es2017-esm.js\"></script>"
+        }
 
         // Add meta tags from configuration
         if (turboConfig?.metaOptions) {
