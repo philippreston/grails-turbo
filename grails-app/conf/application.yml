@@ -3,6 +3,10 @@ info:
     name: '@info.app.name@'
     version: '@info.app.version@'
     grailsVersion: '@info.app.grailsVersion@'
+spring:
+  output:
+    ansi:
+      enabled: always
 dataSource:
   url: jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
   driverClassName: org.h2.Driver

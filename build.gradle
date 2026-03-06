@@ -48,7 +48,7 @@ dependencies {
     runtimeOnly("com.h2database:h2")
     runtimeOnly("javax.xml.bind:jaxb-api:2.3.1")
     runtimeOnly("org.apache.tomcat:tomcat-jdbc")
-    runtimeOnly("org.fusesource.jansi:jansi:1.18")
+    runtimeOnly("org.fusesource.jansi:jansi:2.4.0")
     runtimeOnly("org.glassfish.web:el-impl:2.2.1-b05")
     testImplementation("io.micronaut:micronaut-inject-groovy")
     testImplementation("org.grails:grails-gorm-testing-support")
