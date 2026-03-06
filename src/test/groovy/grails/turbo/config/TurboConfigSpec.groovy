@@ -15,13 +15,6 @@ class TurboConfigSpec extends Specification {
         config.turboVersion == '8.0.4'
     }
 
-    void "test default autoInclude is true"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        expect:
-        config.autoInclude
-    }
 
     void "test default useCdn is true"() {
         given:
@@ -47,22 +40,6 @@ class TurboConfigSpec extends Specification {
         config.enableDrive
     }
 
-    void "test default enableFrames is true"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        expect:
-        config.enableFrames
-    }
-
-    void "test default enableStreams is true"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        expect:
-        config.enableStreams
-    }
-
     void "test can disable drive"() {
         given:
         TurboConfig config = new TurboConfig()
@@ -74,27 +51,6 @@ class TurboConfigSpec extends Specification {
         !config.enableDrive
     }
 
-    void "test can disable frames"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.enableFrames = false
-
-        then:
-        !config.enableFrames
-    }
-
-    void "test can disable streams"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.enableStreams = false
-
-        then:
-        !config.enableStreams
-    }
 
     void "test can set custom version"() {
         given:
@@ -118,16 +74,6 @@ class TurboConfigSpec extends Specification {
         config.cdnUrl == 'https://custom-cdn.com/turbo'
     }
 
-    void "test can disable autoInclude"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.autoInclude = false
-
-        then:
-        !config.autoInclude
-    }
 
     void "test can disable CDN usage"() {
         given:
@@ -146,51 +92,26 @@ class TurboConfigSpec extends Specification {
 
         when:
         config.enableDrive = false
-        config.enableFrames = false
-        config.enableStreams = false
         config.turboVersion = '6.0.0'
         config.cdnUrl = 'https://new-cdn.com'
-        config.autoInclude = false
         config.useCdn = false
 
         then:
         !config.enableDrive
-        !config.enableFrames
-        !config.enableStreams
         config.turboVersion == '6.0.0'
         config.cdnUrl == 'https://new-cdn.com'
-        !config.autoInclude
         !config.useCdn
     }
 
-    void "test config can represent minimal setup"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.enableDrive = true
-        config.enableFrames = false
-        config.enableStreams = false
-
-        then:
-        config.enableDrive
-        !config.enableFrames
-        !config.enableStreams
-    }
-
-    void "test config can represent streams-only setup"() {
+    void "test config can disable drive"() {
         given:
         TurboConfig config = new TurboConfig()
 
         when:
         config.enableDrive = false
-        config.enableFrames = false
-        config.enableStreams = true
 
         then:
         !config.enableDrive
-        !config.enableFrames
-        config.enableStreams
     }
 }
 

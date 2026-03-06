@@ -1,12 +1,18 @@
 package grails.turbo
 
 import grails.testing.web.taglib.TagLibUnitTest
+import grails.turbo.config.TurboConfig
 import spock.lang.Specification
 
 /**
  * Test specification for TurboTagLib.
  */
 class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLib> {
+
+    def setup() {
+        // Initialize turboConfig for the taglib
+        tagLib.turboConfig = new TurboConfig()
+    }
 
     void "test frame tag with required id"() {
         when:

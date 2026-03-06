@@ -27,21 +27,11 @@ class TurboConfig {
 
     /**
      * Whether to enable Turbo Drive (automatic page navigation).
+     * When false, adds meta tag to disable Drive globally.
      * Default: true
      */
     boolean enableDrive = true
 
-    /**
-     * Whether to enable Turbo Frames.
-     * Default: true
-     */
-    boolean enableFrames = true
-
-    /**
-     * Whether to enable Turbo Streams.
-     * Default: true
-     */
-    boolean enableStreams = true
 
     /**
      * Custom Turbo configuration options to be added as meta tags.

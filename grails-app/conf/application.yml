@@ -72,10 +72,7 @@ grails:
     turbo:
       # Turbo plugin configuration
       turboVersion: '8.0.4'
-      autoInclude: true
       useCdn: true
       enableDrive: true
-      enableFrames: true
-      enableStreams: true
       metaOptions:
         cache-control: 'no-cache'
