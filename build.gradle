@@ -18,7 +18,13 @@ repositories {
 }
 
 configurations {
-    all {
+    configureEach {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'org.seleniumhq.selenium') {
+                details.useVersion('4.16.1')
+                details.because('Grails BOM aligns some Selenium artifacts to 4.1.4; mixing with 4.16.x causes NoClassDefFoundError (e.g. HasTouchScreen)')
+            }
+        }
     }
 }
 
@@ -56,6 +62,17 @@ dependencies {
     testImplementation("org.spockframework:spock-core")
     testImplementation("io.micronaut:micronaut-http-client")
 
+    // Geb for functional/integration testing
+    testImplementation("org.grails.plugins:geb")
+    testImplementation("org.seleniumhq.selenium:selenium-remote-driver:4.16.1")
+    testImplementation("org.seleniumhq.selenium:selenium-api:4.16.1")
+    testImplementation("org.seleniumhq.selenium:selenium-support:4.16.1")
+
+    // Runtime Dependencies (Test Only)
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver:4.16.1"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver:4.16.1"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-safari-driver:4.16.1"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-edge-driver:4.16.1"
 }
 
 application {
@@ -68,7 +85,10 @@ java {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    systemProperty "geb.env", System.getProperty('geb.env')
+    systemProperty "geb.build.reportsDir", reporting.file("geb/integrationTest")
 }
+
 assets {
     packagePlugin = true
     minifyJs = true

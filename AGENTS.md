@@ -1,0 +1,142 @@
+# AI Agent Guide - Grails Turbo Plugin
+
+This is a **Grails 6.x plugin** that integrates Hotwired Turbo for SPA-like behavior with server-rendered HTML. Inspired by turbo-rails.
+
+## Architecture Overview
+
+**Core Pattern**: HTTP header detection → trait-based controller support → templated responses
+- `TurboInterceptor` (order=100) detects headers (`Turbo-Request`, `Turbo-Frame`) on ALL requests, adds attributes to request scope
+- `TurboController` trait provides methods to controllers (NOT a base class - use `implements TurboController`)
+- `TurboStreamBuilder` creates fluent chainable responses (e.g., `.append().update().remove()`)
+- Turbo JS loaded via `<turbo:includeTurbo>` tag from CDN (NOT asset pipeline)
+
+**Key Files**:
+- `src/main/groovy/grails/turbo/` - Core trait, builder, constants, request wrapper
+- `grails-app/controllers/grails/turbo/TurboInterceptor.groovy` - Header detection
+- `grails-app/taglib/grails/turbo/TurboTagLib.groovy` - GSP tags (`turbo:frame`, `turbo:stream`)
+- `grails-app/services/grails/turbo/TurboStreamService.groovy` - Service-layer support
+
+## Critical Conventions
+
+### Controllers MUST implement the trait:
+```groovy
+class MyController implements TurboController {
+    // Now has: isTurboRequest(), renderTurboStream{}, respondWithTurbo{}
+}
+```
+
+### Template rendering has a KNOWN LIMITATION (see TurboController.groovy:13):
+Controllers using `renderTemplate()` MUST declare `def groovyPageRenderer` (injected by Grails). The trait declares it as abstract. Without this, template rendering fails silently.
+
+### Response pattern uses closure delegation:
+```groovy
+renderTurboStream {
+    append 'target', renderTemplate('template', [model: data])
+    // 'this' still references controller due to OWNER_FIRST resolveStrategy
+}
+```
+Note: Changed from `DELEGATE_FIRST` to allow controller method access.
+
+### MIME type registration:
+- Format: `turbo_stream` (underscore, not dash)
+- MIME: `text/vnd.turbo-stream.html`
+- Auto-registered in plugin's `doWithApplicationContext()`, manually in `application.yml` under `grails.mime.types.turbo_stream`
+
+## Configuration (application.yml)
+
+Located under `grails.plugin.turbo` (not `grails.turbo`):
+```yaml
+grails:
+  plugin:
+    turbo:
+      turboVersion: '8.0.4'          # CDN version
+      useCdn: true                   # false = don't load JS
+      cdnUrl: 'https://...'          # Override CDN
+      enableDrive: true              # false adds meta tag to disable
+      metaOptions:                   # Converted to <meta name="turbo-{key}">
+        cache-control: 'no-cache'
+```
+Accessed via injected `TurboConfig` bean. Configuration applied in plugin's `doWithApplicationContext()`.
+
+## Build & Test Commands
+
+**Run tests**: `./gradlew test` (unit tests in `src/test/groovy/grails/turbo/`)
+**Integration tests**: `./gradlew integrationTest` (Geb-based tests in `src/integration-test/`)
+**Build plugin**: `./gradlew build` (creates plugin JAR)
+**Run as app**: `./gradlew bootRun` (plugin doubles as demo app)
+
+**Gradle**: 6.1.2, **Grails**: 6.1.2, **Java**: 17 (see `build.gradle` line 66)
+
+### Geb Integration Tests
+- Base spec: `GebIntegrationSpec` (extend for new tests)
+- Config: `src/integration-test/resources/GebConfig.groovy`
+- Run with visible browser: `./gradlew integrationTest -Dgeb.env=chromeHeadful`
+- Browsers: chrome (default headless), chromeHeadful, firefox, firefoxHeadful
+
+## Common Patterns
+
+### Multi-format responses (graceful degradation):
+```groovy
+respondWithTurbo {
+    html { redirect action: 'list' }
+    turboStream { append 'items', renderTemplate('item', [item: item]) }
+    json { render item as JSON }
+}
+```
+Format selection: checks `acceptsTurboStream()` first, then `params.format`, defaults to `html`.
+
+### Frame-specific rendering:
+```groovy
+if (isTurboFrameRequest()) {
+    render template: 'item', model: [item: item]
+    return
+}
+```
+Frame ID available via `getTurboFrameId()`.
+
+### Naming convention for DOM IDs:
+Use `item_${id}` pattern for entity elements (e.g., `task_123`). This appears throughout examples and enables easy remove/replace operations.
+
+## GSP Tag Patterns
+
+### Frame IDs MUST match between request and response:
+```gsp
+<turbo:frame id="messages">  <!-- This ID must match in target response -->
+```
+
+### Lazy loading requires src attribute:
+```gsp
+<turbo:frame id="stats" src="${createLink(action: 'loadStats')}" loading="lazy">
+    Loading...  <!-- Shown until src loads -->
+</turbo:frame>
+```
+
+### Stream tags typically in views, not layouts:
+Used when rendering `.gsp` files as Turbo Stream responses (rare - usually built in controller).
+
+## Plugin Development
+
+**Plugin class**: `GrailsTurboGrailsPlugin.groovy` registers beans and config
+**Reloading**: Controllers auto-reload via Grails. Trait methods available immediately.
+**Constants**: All headers/MIME types in `TurboConstants.groovy` (use instead of string literals)
+**Testing**: Spock specs test individual components (Request, Builder, TagLib, etc.)
+
+## Known Issues & Gotchas
+
+1. **Template rendering**: Controllers need `def groovyPageRenderer` declared (FIXME in code)
+2. **MIME type**: Use `turbo_stream` format, not `turbo-stream` (Grails convention)
+3. **Interceptor order**: TurboInterceptor runs at 100, custom interceptors <100 run before it
+4. **Request attributes**: Set in before(), available in GSP via `${isTurboRequest}`, `${turboFrameId}`
+5. **No asset pipeline**: Turbo JS loaded from CDN via tag, not bundled in application.js
+
+## Testing Approach
+
+Check `src/test/groovy/grails/turbo/` for examples:
+- Mock `HttpServletRequest` for header tests
+- Test builders independently (no HTTP context needed)
+- Controller specs use Grails testing support with mocked headers
+
+---
+
+**Key insight for agents**: This is a Grails plugin that provides a trait-based API. Most functionality comes from implementing the trait, not extending classes. The interceptor makes Turbo transparent to GSPs, while controllers opt-in via the trait.
+
