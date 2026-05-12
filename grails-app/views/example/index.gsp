@@ -59,7 +59,7 @@
             <turbo:frame
                 id="lazy-content"
                 src="${createLink(controller: 'example', action: 'lazyLoad', params: messages ? [id: messages[0].id] : [:])}"
-                loading="eager">
+                loading="lazy">
                 <div class="text-center p-4">
                     <div class="spinner-border" role="status">
                         <span class="sr-only">Loading...</span>
