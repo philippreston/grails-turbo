@@ -6,6 +6,13 @@ package grails.turbo
 class TurboConstants {
 
     /**
+     * Request attribute set by {@code TurboInterceptor} when
+     * {@link grails.turbo.config.TurboConfig#enableFrames} is false, so
+     * {@link TurboRequest} and GSPs treat the request as a non-frame request.
+     */
+    static final String TURBO_FRAMES_DISABLED_ATTR = "turboFramesDisabled"
+
+    /**
      * Request header that indicates the request is from a Turbo Frame
      */
     static final String TURBO_FRAME_HEADER = "Turbo-Frame"

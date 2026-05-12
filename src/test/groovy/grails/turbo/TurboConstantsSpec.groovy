@@ -17,6 +17,11 @@ class TurboConstantsSpec extends Specification {
         TurboConstants.TURBO_FRAME_HEADER == 'Turbo-Frame'
     }
 
+    void "test TURBO_FRAMES_DISABLED_ATTR constant"() {
+        expect:
+        TurboConstants.TURBO_FRAMES_DISABLED_ATTR == 'turboFramesDisabled'
+    }
+
     void "test TURBO_STREAM_MIME_TYPE constant"() {
         expect:
         TurboConstants.TURBO_STREAM_MIME_TYPE == 'text/vnd.turbo-stream.html'
@@ -88,6 +93,7 @@ class TurboConstantsSpec extends Specification {
         expect:
         TurboConstants.TURBO_REQUEST_HEADER != null
         TurboConstants.TURBO_FRAME_HEADER != null
+        TurboConstants.TURBO_FRAMES_DISABLED_ATTR != null
         TurboConstants.TURBO_STREAM_MIME_TYPE != null
         TurboConstants.TURBO_STREAM_FORMAT != null
         TurboConstants.ACTION_APPEND != null
@@ -104,6 +110,7 @@ class TurboConstantsSpec extends Specification {
         expect:
         !TurboConstants.TURBO_REQUEST_HEADER.isEmpty()
         !TurboConstants.TURBO_FRAME_HEADER.isEmpty()
+        !TurboConstants.TURBO_FRAMES_DISABLED_ATTR.isEmpty()
         !TurboConstants.TURBO_STREAM_MIME_TYPE.isEmpty()
         !TurboConstants.TURBO_STREAM_FORMAT.isEmpty()
         !TurboConstants.ACTION_APPEND.isEmpty()

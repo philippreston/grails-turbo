@@ -66,6 +66,20 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         output.contains('autoscroll')
     }
 
+    void "test frame tag renders div when enableFrames is false"() {
+        given:
+        tagLib.turboConfig.enableFrames = false
+
+        when:
+        def output = applyTemplate('<turbo:frame id="no-frames">Content</turbo:frame>')
+
+        then:
+        output.contains('<div id="no-frames">')
+        output.contains('Content')
+        output.contains('</div>')
+        !output.contains('<turbo-frame')
+    }
+
     void "test frame tag throws error without id"() {
         when:
         applyTemplate('<turbo:frame>Content</turbo:frame>')

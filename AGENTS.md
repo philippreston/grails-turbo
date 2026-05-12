@@ -5,7 +5,7 @@ This is a **Grails 6.x plugin** that integrates Hotwired Turbo for SPA-like beha
 ## Architecture Overview
 
 **Core Pattern**: HTTP header detection → trait-based controller support → templated responses
-- `TurboInterceptor` (order=100) detects headers (`Turbo-Request`, `Turbo-Frame`) on ALL requests, adds attributes to request scope
+- `TurboInterceptor` (order=100) detects headers (`Turbo-Request`, `Turbo-Frame`) on ALL requests, adds attributes to request scope (frame headers ignored when `enableFrames: false`)
 - `TurboController` trait provides methods to controllers (NOT a base class - use `implements TurboController`)
 - `TurboStreamBuilder` creates fluent chainable responses (e.g., `.append().update().remove()`)
 - Turbo JS loaded via `<turbo:includeTurbo>` tag from CDN (NOT asset pipeline)
@@ -53,6 +53,7 @@ grails:
       useCdn: true                   # false = don't load JS
       cdnUrl: 'https://...'          # Override CDN
       enableDrive: true              # false adds meta tag to disable
+      enableFrames: true             # false: ignore Turbo-Frame + turbo:frame renders a div
       metaOptions:                   # Converted to <meta name="turbo-{key}">
         cache-control: 'no-cache'
 ```

@@ -30,6 +30,14 @@ class TurboTagLib implements TagLibrary {
             throwTagError("Tag [frame] is missing required attribute [id]")
         }
 
+        if (turboConfig != null && !turboConfig.enableFrames) {
+            out << "<!-- Turbo Frame disabled: using div id=\"${id}\" -->"
+            out << "<div id=\"${id}\">"
+            out << body()
+            out << "</div>"
+            return
+        }
+
         out << "<!-- Turbo Frame: ${id} -->"
         out << "<turbo-frame id=\"${id}\""
 

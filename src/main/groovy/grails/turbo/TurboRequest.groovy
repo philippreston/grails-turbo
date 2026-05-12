@@ -26,7 +26,7 @@ class TurboRequest {
 
     /**
      * Check if the request is a Turbo Frame request.
-     * @return true if the request has the Turbo-Frame header
+     * @return true if the request has the Turbo-Frame header and frames are enabled in configuration
      */
     boolean isTurboFrameRequest() {
         return getTurboFrameId() != null
@@ -37,7 +37,17 @@ class TurboRequest {
      * @return the frame ID, or null if not a frame request
      */
     String getTurboFrameId() {
+        if (isTurboFramesDisabled()) {
+            return null
+        }
         return request.getHeader(TurboConstants.TURBO_FRAME_HEADER)
+    }
+
+    /**
+     * True when {@link TurboConstants#TURBO_FRAMES_DISABLED_ATTR} is set (Turbo Frames disabled in config).
+     */
+    boolean isTurboFramesDisabled() {
+        return Boolean.TRUE == request.getAttribute(TurboConstants.TURBO_FRAMES_DISABLED_ATTR)
     }
 
     /**

@@ -1,12 +1,17 @@
 package grails.turbo
 
 import grails.testing.web.interceptor.InterceptorUnitTest
+import grails.turbo.config.TurboConfig
 import spock.lang.Specification
 
 /**
  * Test specification for TurboInterceptor.
  */
 class TurboInterceptorSpec extends Specification implements InterceptorUnitTest<TurboInterceptor> {
+
+    def setup() {
+        interceptor.turboConfig = new TurboConfig()
+    }
 
     void "test interceptor matches all controllers"() {
         when:
@@ -105,6 +110,21 @@ class TurboInterceptorSpec extends Specification implements InterceptorUnitTest<
         request.getAttribute('isTurboRequest') == true
         request.getAttribute('turboFrameId') == "test-frame"
         request.getAttribute('isTurboFrameRequest') == true
+    }
+
+    void "test interceptor ignores frame headers when enableFrames is false"() {
+        given:
+        interceptor.turboConfig.enableFrames = false
+        request.addHeader(TurboConstants.TURBO_FRAME_HEADER, "my-frame")
+
+        when:
+        withRequest(controller: "test")
+        interceptor.before()
+
+        then:
+        request.getAttribute(TurboConstants.TURBO_FRAMES_DISABLED_ATTR) == true
+        request.getAttribute('turboFrameId') == null
+        request.getAttribute('isTurboFrameRequest') == false
     }
 
     void "test interceptor before always returns true to allow request to continue"() {

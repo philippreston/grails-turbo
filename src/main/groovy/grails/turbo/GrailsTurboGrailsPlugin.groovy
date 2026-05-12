@@ -76,6 +76,9 @@ over HTTP and WebSocket connections.
             if (config.containsKey('enableDrive')) {
                 turboConfig.enableDrive = config.enableDrive as boolean
             }
+            if (config.containsKey('enableFrames')) {
+                turboConfig.enableFrames = config.enableFrames as boolean
+            }
             if (config.containsKey('metaOptions')) {
                 turboConfig.metaOptions = config.metaOptions as Map<String, String>
             }

@@ -46,6 +46,21 @@ class TurboRequestSpec extends Specification {
         turboRequest.getTurboFrameId() == "my-frame"
     }
 
+    void "test frame headers ignored when turboFramesDisabled request attribute is set"() {
+        given:
+        HttpServletRequest request = Mock(HttpServletRequest)
+        request.getAttribute(TurboConstants.TURBO_FRAMES_DISABLED_ATTR) >> true
+        request.getHeader(TurboConstants.TURBO_FRAME_HEADER) >> "my-frame"
+
+        when:
+        TurboRequest turboRequest = new TurboRequest(request)
+
+        then:
+        !turboRequest.isTurboFrameRequest()
+        turboRequest.getTurboFrameId() == null
+        turboRequest.isTurboFramesDisabled()
+    }
+
     void "test acceptsTurboStream returns true when MIME type is in Accept header"() {
         given:
         HttpServletRequest request = Mock(HttpServletRequest)

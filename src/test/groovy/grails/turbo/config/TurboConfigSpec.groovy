@@ -40,6 +40,14 @@ class TurboConfigSpec extends Specification {
         config.enableDrive
     }
 
+    void "test default enableFrames is true"() {
+        given:
+        TurboConfig config = new TurboConfig()
+
+        expect:
+        config.enableFrames
+    }
+
     void "test can disable drive"() {
         given:
         TurboConfig config = new TurboConfig()
@@ -86,18 +94,31 @@ class TurboConfigSpec extends Specification {
         !config.useCdn
     }
 
+    void "test can disable frames"() {
+        given:
+        TurboConfig config = new TurboConfig()
+
+        when:
+        config.enableFrames = false
+
+        then:
+        !config.enableFrames
+    }
+
     void "test config properties are mutable"() {
         given:
         TurboConfig config = new TurboConfig()
 
         when:
         config.enableDrive = false
+        config.enableFrames = false
         config.turboVersion = '6.0.0'
         config.cdnUrl = 'https://new-cdn.com'
         config.useCdn = false
 
         then:
         !config.enableDrive
+        !config.enableFrames
         config.turboVersion == '6.0.0'
         config.cdnUrl == 'https://new-cdn.com'
         !config.useCdn

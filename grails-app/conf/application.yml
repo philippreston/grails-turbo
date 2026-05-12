@@ -74,5 +74,6 @@ grails:
       turboVersion: '8.0.4'
       useCdn: true
       enableDrive: true
+      enableFrames: true
       metaOptions:
         cache-control: 'no-cache'

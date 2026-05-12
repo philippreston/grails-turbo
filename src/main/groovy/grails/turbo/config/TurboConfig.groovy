@@ -32,6 +32,14 @@ class TurboConfig {
      */
     boolean enableDrive = true
 
+    /**
+     * Whether to enable Turbo Frames (scoped updates, lazy src frames).
+     * When false, {@code turbo:frame} renders a plain {@code div} with the same id and
+     * {@link TurboRequest#isTurboFrameRequest()} is forced false for the request.
+     * Default: true
+     */
+    boolean enableFrames = true
+
 
     /**
      * Custom Turbo configuration options to be added as meta tags.
