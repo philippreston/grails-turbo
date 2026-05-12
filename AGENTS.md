@@ -15,6 +15,12 @@ This is a **Grails 6.x plugin** that integrates Hotwired Turbo for SPA-like beha
 - `grails-app/controllers/grails/turbo/TurboInterceptor.groovy` - Header detection
 - `grails-app/taglib/grails/turbo/TurboTagLib.groovy` - GSP tags (`turbo:frame`, `turbo:stream`)
 - `grails-app/services/grails/turbo/TurboStreamService.groovy` - Service-layer support
+- `grails-app/views/layouts/turbo_frame.gsp` - Optional minimal layout for frame navigations (turbo-rails-style; opt in via controller `layout` closure)
+
+### turbo:frame tag
+- Provide **`id`**, or **`bean`** (Rails-style dom_id via `TurboTagLib.turboDomId`), or **`ids`** (list joined with `_`).
+- **Arbitrary HTML attributes** (`class`, `style`, `data-*`, `aria-*`, …) pass through to `<turbo-frame>` (HTML-escaped).
+- Optional layout **`turbo_frame`** when `request.getAttribute('isTurboFrameRequest')` is true; vary ETags if you cache responses.
 
 ## Critical Conventions
 

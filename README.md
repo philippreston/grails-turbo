@@ -113,12 +113,36 @@ Creates a Turbo Frame element:
 </turbo:frame>
 ```
 
+Rails-style `dom_id`: use `bean` (or composite `ids`) instead of hand-building the id:
+
+```gsp
+<turbo:frame bean="${message}" class="card">...</turbo:frame>
+<turbo:frame ids="${[userId, 'tray']}" src="...">...</turbo:frame>
+```
+
+`TurboTagLib.turboDomId(bean)` produces ids like `message_42` or `new_message` when `id` is null (similar to `ActionView::RecordIdentifier#dom_id`).
+
 **Attributes:**
-- `id` (required): Unique identifier for the frame
+- `id`: Frame element id (omit if `bean` or `ids` sets it)
+- `bean`: Domain / map-like object for derived id (`simpleName_id` or `new_simpleName`)
+- `ids`: List of parts joined with `_` for composite ids
 - `src`: URL to lazy-load content
 - `loading`: 'eager' or 'lazy' (default: 'eager')
 - `target`: Target frame for navigation
 - `autoscroll`: Auto-scroll to frame on update
+- Any other attributes (`class`, `style`, `data-*`, `aria-*`, etc.) are passed through to `<turbo-frame>` (or to the fallback `<div>` when `enableFrames: false`).
+
+#### Minimal layout for frame requests (turbo-rails parity)
+
+turbo-rails swaps in a minimal layout for `Turbo-Frame` requests. This plugin ships [`grails-app/views/layouts/turbo_frame.gsp`](grails-app/views/layouts/turbo_frame.gsp) (minimal `<head>` + `<g:layoutBody/>`). In your application, use a **dynamic layout** closure that checks the `TurboInterceptor` flag:
+
+```groovy
+static layout = { ->
+    request.getAttribute('isTurboFrameRequest') ? 'turbo_frame' : 'main'
+}
+```
+
+(Exact `layout` syntax may vary by Grails version; see Grails documentation.) Alternatively, `render template:` / branch in the action when `isTurboFrameRequest()` (from `TurboController`) is true. For HTTP caching, vary ETags or cache keys so full-page responses and frame responses are not mixed up (Rails adds an etag segment for frame requests).
 
 ### turbo:stream
 

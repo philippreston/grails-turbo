@@ -19,9 +19,35 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         def output = applyTemplate('<turbo:frame id="test-frame">Content</turbo:frame>')
 
         then:
-        output.contains('<turbo-frame id="test-frame">')
+        output.contains('<turbo-frame id="test-frame"')
         output.contains('Content')
         output.contains('</turbo-frame>')
+    }
+
+    void "test frame tag passes through extra html attributes"() {
+        when:
+        def output = applyTemplate('<turbo:frame id="x" class="my-card" data-test="1">Body</turbo:frame>')
+
+        then:
+        output.contains('class="my-card"')
+        output.contains('data-test="1"')
+        output.contains('<turbo-frame id="x"')
+    }
+
+    void "test frame tag with bean derives dom id"() {
+        when:
+        def output = applyTemplate('<turbo:frame bean="${b}">X</turbo:frame>', [b: new FrameIdBean(id: 42L)])
+
+        then:
+        output.contains('id="frameIdBean_42"')
+    }
+
+    void "test frame tag with ids builds composite id"() {
+        when:
+        def output = applyTemplate('<turbo:frame ids="${parts}">Z</turbo:frame>', [parts: [7, 'tray']])
+
+        then:
+        output.contains('id="7_tray"')
     }
 
     void "test frame tag with src attribute"() {
@@ -243,6 +269,20 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
 
         then:
         output.contains('turbo@7.3.0')
+    }
+
+    void "turboDomId persisted id"() {
+        expect:
+        TurboTagLib.turboDomId(new FrameIdBean(id: 1L)) == 'frameIdBean_1'
+    }
+
+    void "turboDomId new record"() {
+        expect:
+        TurboTagLib.turboDomId(new FrameIdBean()) == 'new_frameIdBean'
+    }
+
+    static class FrameIdBean {
+        Long id
     }
 }
 
