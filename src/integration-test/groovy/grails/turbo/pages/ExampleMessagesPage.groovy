@@ -32,7 +32,7 @@ class ExampleMessagesPage extends Page {
      * Deletes the message card whose heading matches {@code title}. Turbo uses {@code data-turbo-confirm}.
      */
     void deleteMessageWithTitle(String title) {
-        def card = $('div[id^=message_]').has('h5.card-title', text: title)
+        def card = $('[id^=message_]').has('h5.card-title', text: title)
         waitFor { card.displayed }
         withConfirm(true) {
             card.find('button.btn-danger').click()
