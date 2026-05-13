@@ -45,11 +45,19 @@ class TurboStreamService {
         return builder().append(target, content).build()
     }
 
+    String appendAll(String targets, String content) {
+        builder().appendAll(targets, content).build()
+    }
+
     /**
      * Create a Turbo Stream to prepend content to a target.
      */
     String prepend(String target, String content) {
         return builder().prepend(target, content).build()
+    }
+
+    String prependAll(String targets, String content) {
+        builder().prependAll(targets, content).build()
     }
 
     /**
@@ -59,11 +67,35 @@ class TurboStreamService {
         return builder().replace(target, content).build()
     }
 
+    String replace(String target, String content, boolean morph) {
+        builder().replace(target, content, morph).build()
+    }
+
+    String replaceAll(String targets, String content) {
+        builder().replaceAll(targets, content).build()
+    }
+
+    String replaceAll(String targets, String content, boolean morph) {
+        builder().replaceAll(targets, content, morph).build()
+    }
+
     /**
      * Create a Turbo Stream to update a target's inner HTML.
      */
     String update(String target, String content) {
         return builder().update(target, content).build()
+    }
+
+    String update(String target, String content, boolean morph) {
+        builder().update(target, content, morph).build()
+    }
+
+    String updateAll(String targets, String content) {
+        builder().updateAll(targets, content).build()
+    }
+
+    String updateAll(String targets, String content, boolean morph) {
+        builder().updateAll(targets, content, morph).build()
     }
 
     /**
@@ -73,6 +105,10 @@ class TurboStreamService {
         return builder().remove(target).build()
     }
 
+    String removeAll(String targets) {
+        builder().removeAll(targets).build()
+    }
+
     /**
      * Create a Turbo Stream to insert content before a target.
      */
@@ -80,11 +116,19 @@ class TurboStreamService {
         return builder().before(target, content).build()
     }
 
+    String beforeAll(String targets, String content) {
+        builder().beforeAll(targets, content).build()
+    }
+
     /**
      * Create a Turbo Stream to insert content after a target.
      */
     String after(String target, String content) {
         return builder().after(target, content).build()
+    }
+
+    String afterAll(String targets, String content) {
+        builder().afterAll(targets, content).build()
     }
 
     /**

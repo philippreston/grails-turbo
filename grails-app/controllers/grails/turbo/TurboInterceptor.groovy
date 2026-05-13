@@ -23,6 +23,9 @@ class TurboInterceptor {
         if (turboConfig != null && !turboConfig.enableFrames) {
             request.setAttribute(TurboConstants.TURBO_FRAMES_DISABLED_ATTR, true)
         }
+        if (turboConfig != null && !turboConfig.enableStreams) {
+            request.setAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR, true)
+        }
         // Create TurboRequest wrapper and add to request attributes
         TurboRequest turboRequest = new TurboRequest(request)
 
@@ -32,7 +35,7 @@ class TurboInterceptor {
         request.setAttribute('turboFrameId', turboRequest.getTurboFrameId())
 
         // Add Turbo Stream MIME type if not already registered
-        if (!response.format) {
+        if (!response.format && (turboConfig == null || turboConfig.enableStreams)) {
             if (turboRequest.acceptsTurboStream()) {
                 response.format = TurboConstants.TURBO_STREAM_FORMAT
                 response.contentType = TurboConstants.TURBO_STREAM_MIME_TYPE

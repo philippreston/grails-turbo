@@ -75,5 +75,8 @@ grails:
       useCdn: true
       enableDrive: true
       enableFrames: true
+      enableStreams: true
+      streamSigningSecret: 'dev-stream-secret-change-me'
+      globalIdApp: 'application'
       metaOptions:
         cache-control: 'no-cache'

@@ -7,6 +7,36 @@ import spock.lang.Specification
  */
 class TurboStreamBuilderSpec extends Specification {
 
+    void "test appendAll uses targets"() {
+        given:
+        TurboStreamBuilder builder = new TurboStreamBuilder()
+
+        when:
+        String result = builder.appendAll('.row', '<div>x</div>').build()
+
+        then:
+        result.contains('action="append"')
+        result.contains('targets=".row"')
+    }
+
+    void "test replace morph"() {
+        when:
+        String result = new TurboStreamBuilder().replace('x', '<p>y</p>', true).build()
+
+        then:
+        result.contains('method="morph"')
+        result.contains('target="x"')
+    }
+
+    void "test target id is escaped in attribute"() {
+        when:
+        String result = new TurboStreamBuilder().update('bad<id>', 'c').build()
+
+        then:
+        result.contains('&lt;') && result.contains('target=')
+        !result.contains('target="bad<id>"')
+    }
+
     void "test append action"() {
         given:
         TurboStreamBuilder builder = new TurboStreamBuilder()

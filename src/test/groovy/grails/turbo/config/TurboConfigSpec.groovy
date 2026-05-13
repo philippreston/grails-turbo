@@ -112,6 +112,7 @@ class TurboConfigSpec extends Specification {
         when:
         config.enableDrive = false
         config.enableFrames = false
+        config.enableStreams = false
         config.turboVersion = '6.0.0'
         config.cdnUrl = 'https://new-cdn.com'
         config.useCdn = false
@@ -119,20 +120,28 @@ class TurboConfigSpec extends Specification {
         then:
         !config.enableDrive
         !config.enableFrames
+        !config.enableStreams
         config.turboVersion == '6.0.0'
         config.cdnUrl == 'https://new-cdn.com'
         !config.useCdn
     }
 
-    void "test config can disable drive"() {
+    void "test default enableStreams true"() {
+        expect:
+        new TurboConfig().enableStreams
+    }
+
+    void "test can set stream signing secret and global id app"() {
         given:
-        TurboConfig config = new TurboConfig()
+        TurboConfig c = new TurboConfig()
 
         when:
-        config.enableDrive = false
+        c.streamSigningSecret = 'k'
+        c.globalIdApp = 'myapp'
 
         then:
-        !config.enableDrive
+        c.streamSigningSecret == 'k'
+        c.globalIdApp == 'myapp'
     }
-}
 
+}

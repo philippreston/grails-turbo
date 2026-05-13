@@ -13,6 +13,16 @@ class TurboConstants {
     static final String TURBO_FRAMES_DISABLED_ATTR = "turboFramesDisabled"
 
     /**
+     * Request attribute set when {@link grails.turbo.config.TurboConfig#enableStreams} is false.
+     */
+    static final String TURBO_STREAMS_DISABLED_ATTR = "turboStreamsDisabled"
+
+    /**
+     * Default Action Cable channel id for Hotwired Turbo Streams (matches turbo-rails).
+     */
+    static final String DEFAULT_STREAMS_CHANNEL = "Turbo::StreamsChannel"
+
+    /**
      * Request header that indicates the request is from a Turbo Frame
      */
     static final String TURBO_FRAME_HEADER = "Turbo-Frame"

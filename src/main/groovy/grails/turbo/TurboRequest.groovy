@@ -51,10 +51,20 @@ class TurboRequest {
     }
 
     /**
+     * True when {@link TurboConstants#TURBO_STREAMS_DISABLED_ATTR} is set (Turbo Streams disabled in configuration).
+     */
+    boolean isTurboStreamsDisabled() {
+        return Boolean.TRUE == request.getAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR)
+    }
+
+    /**
      * Check if the request accepts Turbo Stream responses.
      * @return true if the request accepts turbo-stream MIME type
      */
     boolean acceptsTurboStream() {
+        if (isTurboStreamsDisabled()) {
+            return false
+        }
         String accept = request.getHeader("Accept")
         return accept != null && accept.contains(TurboConstants.TURBO_STREAM_MIME_TYPE)
     }

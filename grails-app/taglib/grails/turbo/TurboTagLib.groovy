@@ -90,59 +90,104 @@ class TurboTagLib implements TagLibrary {
     /**
      * Creates a turbo-stream tag for server-generated updates.
      *
-     * @attr action REQUIRED - The action to perform: append, prepend, replace, update, remove, before, after
-     * @attr target REQUIRED - The target element ID (required for all actions except remove)
-     * @attr targets - CSS selector for multiple targets
+     * @attr action REQUIRED - The action to perform: append, prepend, replace, update, remove, before, after, refresh
+     * @attr target - Single element id
+     * @attr targets - CSS selector for multiple targets (append_all style)
+     * @attr morph - If true on replace/update, emit {@code method="morph"} (Turbo 8)
      */
     Closure stream = { attrs, body ->
-        String action = attrs.action
+        Map m = attrs != null ? new LinkedHashMap(attrs as Map) : [:]
+        String action = (String) m.remove('action')
         if (!action) {
             throwTagError("Tag [stream] is missing required attribute [action]")
         }
 
-        String target = attrs.target
-        String targets = attrs.targets
+        boolean morph = truthy(m.remove('morph'))
+        String target = (String) m.remove('target')
+        String targets = (String) m.remove('targets')
 
         if (!target && !targets && action != 'remove') {
             throwTagError("Tag [stream] requires either [target] or [targets] attribute")
         }
 
-        out << "<turbo-stream action=\"${action}\""
-
+        out << '<turbo-stream action="' << escapeAttr(action) << '"'
         if (target) {
-            out << " target=\"${target}\""
+            out << ' target="' << escapeAttr(target) << '"'
         }
         if (targets) {
-            out << " targets=\"${targets}\""
+            out << ' targets="' << escapeAttr(targets) << '"'
         }
+        if (morph && (action == TurboConstants.ACTION_REPLACE || action == TurboConstants.ACTION_UPDATE)) {
+            out << ' method="morph"'
+        }
+        out << '>'
 
-        out << ">"
-
-        if (action != 'remove') {
-            out << "<template>"
+        if (action != TurboConstants.ACTION_REMOVE) {
+            out << '<template>'
             out << body()
-            out << "</template>"
+            out << '</template>'
         }
 
-        out << "</turbo-stream>"
+        out << '</turbo-stream>'
     }
 
     /**
-     * Creates a turbo-cable-stream-source tag for streaming over WebSocket.
+     * Rails {@code turbo_stream_from}: emits {@code turbo-cable-stream-source} with signed stream identifier.
      *
-     * @attr channel REQUIRED - The cable channel to subscribe to
-     * @attr signedStreamName - The signed stream name for authentication
+     * @attr streamables REQUIRED - Iterable, array, or comma-separated equivalents (e.g. {@code "${[account,'entries']}"})
+     * @attr channel - Channel class/name (default {@code Turbo::StreamsChannel})
+     *
+     * Requires {@link grails.turbo.config.TurboConfig#streamSigningSecret} (Rails verifier-compatible).
+     * The legacy {@link #cableStreamSource} tag remains for low-level use but is deprecated.
      */
+    Closure streamFrom = { attrs ->
+        if (turboConfig != null && !turboConfig.enableStreams) {
+            out << '<!-- turbo:streamFrom skipped (enableStreams=false) -->'
+            return
+        }
+
+        Map m = attrs != null ? new LinkedHashMap(attrs as Map) : [:]
+        Object raw = m.remove('streamables')
+        if (raw == null) {
+            throwTagError("Tag [streamFrom] is missing required attribute [streamables]")
+        }
+
+        List<?> streamables = normalizeStreamablesList(raw)
+        if (streamables.isEmpty()) {
+            throwTagError('Tag [streamFrom] requires non-blank streamables')
+        }
+
+        String app = turboConfig?.globalIdApp ?: 'application'
+        String canonical = TurboStreamName.fromIterable(streamables, app)
+
+        String channel = (m.remove('channel') ?: TurboConstants.DEFAULT_STREAMS_CHANNEL).toString()
+        String signingSecret = turboConfig?.streamSigningSecret
+        if (!signingSecret?.trim()) {
+            throwTagError('Tag [streamFrom] requires grails.plugin.turbo.streamSigningSecret (Rails Turbo.signed_stream_verifier key)')
+        }
+
+        String signed = new TurboRailsMessageVerifier(signingSecret.trim()).generate(canonical)
+
+        out << '<turbo-cable-stream-source channel="' << escapeAttr(channel) << '"'
+        out << ' signed-stream-name="' << escapeAttr(signed) << '"'
+        writeHtmlAttributeMap(out, m)
+        out << '></turbo-cable-stream-source>'
+    }
+
+    /**
+     * @deprecated Use {@link #streamFrom}.
+     */
+    @Deprecated
     Closure cableStreamSource = { attrs ->
         String channel = attrs.channel
         if (!channel) {
             throwTagError("Tag [cableStreamSource] is missing required attribute [channel]")
         }
 
-        out << "<turbo-cable-stream-source channel=\"${channel}\""
+        out << "<turbo-cable-stream-source channel=\"${escapeAttr(channel)}\""
 
         if (attrs.signedStreamName) {
-            out << " signed-stream-name=\"${attrs.signedStreamName}\""
+            out << " signed-stream-name=\"${escapeAttr(attrs.signedStreamName)}\""
         }
 
         out << "></turbo-cable-stream-source>"
@@ -276,5 +321,22 @@ class TurboTagLib implements TagLibrary {
 
     private static boolean safeAttributeName(String name) {
         name ==~ /[a-zA-Z_:][a-zA-Z0-9_:.-]*/
+    }
+
+    private static List<Object> normalizeStreamablesList(Object raw) {
+        if (raw == null) {
+            return []
+        }
+        if (raw instanceof Object[]) {
+            return (raw as Object[]).toList()
+        }
+        if (raw instanceof Iterable && !(raw instanceof Map)) {
+            List<Object> list = []
+            for (Object o : (Iterable<?>) raw) {
+                list << o
+            }
+            return list
+        }
+        [raw]
     }
 }

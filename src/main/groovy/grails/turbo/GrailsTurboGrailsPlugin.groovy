@@ -79,6 +79,15 @@ over HTTP and WebSocket connections.
             if (config.containsKey('enableFrames')) {
                 turboConfig.enableFrames = config.enableFrames as boolean
             }
+            if (config.containsKey('enableStreams')) {
+                turboConfig.enableStreams = config.enableStreams as boolean
+            }
+            if (config.containsKey('streamSigningSecret')) {
+                turboConfig.streamSigningSecret = config.streamSigningSecret as String
+            }
+            if (config.containsKey('globalIdApp')) {
+                turboConfig.globalIdApp = config.globalIdApp as String
+            }
             if (config.containsKey('metaOptions')) {
                 turboConfig.metaOptions = config.metaOptions as Map<String, String>
             }

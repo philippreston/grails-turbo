@@ -60,6 +60,9 @@ grails:
       cdnUrl: 'https://...'          # Override CDN
       enableDrive: true              # false adds meta tag to disable
       enableFrames: true             # false: ignore Turbo-Frame + turbo:frame renders a div
+      enableStreams: true            # false: acceptsTurboStream() false; no turbo_stream MIME promotion
+      streamSigningSecret: '...'     # required for turbo:streamFrom (Rails MessageVerifier SHA256+JSON)
+      globalIdApp: 'application'     # app segment in gid:// when streamables include domain objects
       metaOptions:                   # Converted to <meta name="turbo-{key}">
         cache-control: 'no-cache'
 ```
@@ -119,7 +122,10 @@ Use `item_${id}` pattern for entity elements (e.g., `task_123`). This appears th
 ```
 
 ### Stream tags typically in views, not layouts:
-Used when rendering `.gsp` files as Turbo Stream responses (rare - usually built in controller).
+Used when rendering `.gsp` files as Turbo Stream responses (rare — usually built in controller).
+
+### `turbo:streamFrom` (Action Cable / Turbo Streams subscriptions)
+Rails-style **`turbo-cable-stream-source`**: signed stream names for `Turbo::StreamsChannel`. Use **`streamables`** (strings and/or domain instances); names are canonicalized (`TurboStreamName`) and signed with [`TurboRailsMessageVerifier`](src/main/groovy/grails/turbo/TurboRailsMessageVerifier.groovy) (compatible with Rails `ActiveSupport::MessageVerifier`, digest **SHA256**, **JSON** serializer, same format as `Turbo.signed_stream_verifier`). Configure a non-blank **`streamSigningSecret`**; the taglib errors if it is missing. Set **`globalIdApp`** to match your app segment in `gid://` when encoding entities. Prefer **`turbo:streamFrom`**; **`turbo:cableStreamSource`** is deprecated for hand-built sources.
 
 ## Plugin Development
 
@@ -135,6 +141,7 @@ Used when rendering `.gsp` files as Turbo Stream responses (rare - usually built
 3. **Interceptor order**: TurboInterceptor runs at 100, custom interceptors <100 run before it
 4. **Request attributes**: Set in before(), available in GSP via `${isTurboRequest}`, `${turboFrameId}`
 5. **No asset pipeline**: Turbo JS loaded from CDN via tag, not bundled in application.js
+6. **Streams gating**: With `enableStreams: false`, stream subscription tags are skipped and HTTP turbo-stream negotiation is suppressed (see `TurboConstants.TURBO_STREAMS_DISABLED_ATTR`)
 
 ## Testing Approach
 

@@ -72,6 +72,16 @@ class TurboConstantsSpec extends Specification {
         TurboConstants.ACTION_REFRESH == 'refresh'
     }
 
+    void "test TURBO_STREAMS_DISABLED_ATTR"() {
+        expect:
+        TurboConstants.TURBO_STREAMS_DISABLED_ATTR == 'turboStreamsDisabled'
+    }
+
+    void "test DEFAULT_STREAMS_CHANNEL"() {
+        expect:
+        TurboConstants.DEFAULT_STREAMS_CHANNEL == 'Turbo::StreamsChannel'
+    }
+
     void "test all action constants are unique"() {
         given:
         def actions = [
@@ -94,6 +104,8 @@ class TurboConstantsSpec extends Specification {
         TurboConstants.TURBO_REQUEST_HEADER != null
         TurboConstants.TURBO_FRAME_HEADER != null
         TurboConstants.TURBO_FRAMES_DISABLED_ATTR != null
+        TurboConstants.TURBO_STREAMS_DISABLED_ATTR != null
+        TurboConstants.DEFAULT_STREAMS_CHANNEL != null
         TurboConstants.TURBO_STREAM_MIME_TYPE != null
         TurboConstants.TURBO_STREAM_FORMAT != null
         TurboConstants.ACTION_APPEND != null
@@ -111,6 +123,8 @@ class TurboConstantsSpec extends Specification {
         !TurboConstants.TURBO_REQUEST_HEADER.isEmpty()
         !TurboConstants.TURBO_FRAME_HEADER.isEmpty()
         !TurboConstants.TURBO_FRAMES_DISABLED_ATTR.isEmpty()
+        !TurboConstants.TURBO_STREAMS_DISABLED_ATTR.isEmpty()
+        !TurboConstants.DEFAULT_STREAMS_CHANNEL.isEmpty()
         !TurboConstants.TURBO_STREAM_MIME_TYPE.isEmpty()
         !TurboConstants.TURBO_STREAM_FORMAT.isEmpty()
         !TurboConstants.ACTION_APPEND.isEmpty()

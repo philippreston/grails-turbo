@@ -96,5 +96,19 @@ class TurboRequestSpec extends Specification {
         then:
         turboRequest.getFormat() == TurboConstants.TURBO_STREAM_FORMAT
     }
-}
 
+    void "test acceptsTurboStream false when turboStreamsDisabled attribute set"() {
+        given:
+        HttpServletRequest request = Mock(HttpServletRequest)
+        request.getAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR) >> true
+        request.getHeader("Accept") >> TurboConstants.TURBO_STREAM_MIME_TYPE
+
+        when:
+        TurboRequest turboRequest = new TurboRequest(request)
+
+        then:
+        !turboRequest.acceptsTurboStream()
+        turboRequest.isTurboStreamsDisabled()
+        turboRequest.getFormat() == null
+    }
+}

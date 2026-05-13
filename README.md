@@ -158,6 +158,21 @@ Creates a Turbo Stream element (typically used in views):
 - `action` (required): append, prepend, replace, update, remove, before, after
 - `target`: Target element ID
 - `targets`: CSS selector for multiple targets
+- `morph`: when `true` on replace/update style actions, sets `method="morph"` on the element (morphing updates)
+
+### turbo:streamFrom
+
+Subscribes to Turbo Streams over Action Cable (Rails **`turbo_stream_from`** style). Renders **`turbo-cable-stream-source`** for channel **`Turbo::StreamsChannel`** with a **signed** stream name (`signed-stream-name` attribute).
+
+```gsp
+<turbo:streamFrom streamables="${[accountKey, message]}"/>
+```
+
+- **`streamables`** (required): strings and/or domain objects (see `TurboStreamName`); objects are encoded with `gid://{globalIdApp}/…` semantics.
+- Configure a non-empty **`streamSigningSecret`** (`grails.plugin.turbo`). Signing matches Rails **`ActiveSupport::MessageVerifier`** (SHA256 digest, JSON serialization); implementation is **`TurboRailsMessageVerifier`**.
+- With **`enableStreams: false`**, the tag emits an HTML comment and no subscription element.
+
+Prefer **`turbo:streamFrom`** over **`turbo:cableStreamSource`**, which is deprecated for manually wiring the same markup.
 
 ### turbo:includeTurbo
 
@@ -255,18 +270,23 @@ In GSP views:
 
 ## Configuration
 
-Configure the plugin in `application.yml`:
+Configure the plugin under **`grails.plugin.turbo`** (not `grails.turbo`) in `application.yml`:
 
 ```yaml
 grails:
+  plugin:
     turbo:
-        turboVersion: '8.0.4'
-        autoInclude: true
-        useCdn: true
-        enableDrive: true
-        enableFrames: true
-        enableStreams: true
+      turboVersion: '8.0.4'
+      useCdn: true
+      cdnUrl: 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'  # optional override
+      enableDrive: true
+      enableFrames: true
+      enableStreams: true
+      streamSigningSecret: 'change-me-in-production'   # required for turbo:streamFrom signing
+      globalIdApp: 'application'                        # gid:// segment for streamable domain objects
 ```
+
+With **`enableStreams: false`**, the plugin does not promote the `turbo_stream` format from `Accept` and `acceptsTurboStream()` is always false; subscription tags that depend on streams emit a skip comment instead of markup.
 
 ## Advanced Usage
 

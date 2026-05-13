@@ -11,7 +11,7 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
 
     def setup() {
         // Initialize turboConfig for the taglib
-        tagLib.turboConfig = new TurboConfig()
+        tagLib.turboConfig = new TurboConfig(streamSigningSecret: 'secret')
     }
 
     void "test frame tag with required id"() {
@@ -112,6 +112,47 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
 
         then:
         thrown(Exception)
+    }
+
+    void "test stream tag with morph on replace"() {
+        when:
+        def output = applyTemplate('<turbo:stream action="replace" target="a" morph="true">X</turbo:stream>')
+
+        then:
+        output.contains('method="morph"')
+        output.contains('action="replace"')
+    }
+
+    void "test streamFrom produces signed turbo-cable-stream-source"() {
+        when:
+        def output = applyTemplate(
+            '''<turbo:streamFrom streamables="${parts}"/>''',
+            [parts: ['myaccount', 'entries']]
+        )
+        String signedName = extractSignedStreamName(output)
+        String decoded = new TurboRailsMessageVerifier('secret').verified(signedName)
+
+        then:
+        output.contains('turbo-cable-stream-source channel="Turbo::StreamsChannel"')
+        output.contains('signed-stream-name=')
+        decoded.startsWith('myaccount')
+    }
+
+    void "test streamFrom skipped when enableStreams false"() {
+        given:
+        tagLib.turboConfig.enableStreams = false
+
+        when:
+        def output = applyTemplate('<turbo:streamFrom streamables="${[\'a\']}"/>')
+
+        then:
+        output.contains('skipped')
+        !output.contains('signed-stream-name')
+    }
+
+    private static String extractSignedStreamName(String html) {
+        def m = (html =~ /signed-stream-name="([^"]+)"/)
+        return m.find() ? m.group(1) : ''
     }
 
     void "test stream tag with append action"() {

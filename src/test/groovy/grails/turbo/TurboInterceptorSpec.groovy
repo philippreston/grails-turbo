@@ -175,6 +175,18 @@ class TurboInterceptorSpec extends Specification implements InterceptorUnitTest<
         request.getAttribute('isTurboRequest') == true
     }
 
+    void "test interceptor marks turboStreamsDisabled when enableStreams false"() {
+        given:
+        interceptor.turboConfig.enableStreams = false
+
+        when:
+        withRequest(controller: "test")
+        interceptor.before()
+
+        then:
+        request.getAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR) == true
+    }
+
     void "test interceptor handles null headers gracefully"() {
         when:
         withRequest(controller: "test")

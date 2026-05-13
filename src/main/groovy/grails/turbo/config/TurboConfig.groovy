@@ -40,6 +40,23 @@ class TurboConfig {
      */
     boolean enableFrames = true
 
+    /**
+     * When false, {@link grails.turbo.TurboRequest#acceptsTurboStream()} is always false and the
+     * interceptor will not promote the {@code turbo_stream} response format from the Accept header.
+     */
+    boolean enableStreams = true
+
+    /**
+     * Secret for signing stream subscription names (Rails {@code Turbo.signed_stream_verifier} /
+     * {@link grails.turbo.TurboRailsMessageVerifier}: digest SHA256, JSON serializer).
+     * Must be non-blank when using {@code turbo:streamFrom} (the taglib throws otherwise).
+     */
+    String streamSigningSecret
+
+    /**
+     * Application segment in {@code gid://app/Model/id} when encoding domain objects for stream names.
+     */
+    String globalIdApp = 'application'
 
     /**
      * Custom Turbo configuration options to be added as meta tags.
