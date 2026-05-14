@@ -1,14 +1,14 @@
-package grails.turbo.example
+package grails.turbo
 
-import grails.turbo.GebIntegrationSpec
-import grails.turbo.pages.ExampleMessagesPage
+import grails.turbo.example.Message
+import grails.turbo.pages.TurboFrameMessagesPage
 import grails.testing.mixin.integration.Integration
 
 /**
- * Full-stack checks for the Turbo example message CRUD flow and lazy-loaded frame.
+ * Geb checks for Turbo Frame message CRUD and lazy-loaded frame on the demo page.
  */
 @Integration
-class ExampleMessagesGebSpec extends GebIntegrationSpec {
+class TurboFrameMessagesGebSpec extends GebIntegrationSpec {
 
     void setup() {
         Message.withNewTransaction {
@@ -22,8 +22,8 @@ class ExampleMessagesGebSpec extends GebIntegrationSpec {
         def firstTitle = "Geb first $suffix"
         def secondTitle = "Geb second $suffix"
 
-        when: 'opening the example page'
-        to ExampleMessagesPage
+        when: 'opening the turbo frame messages demo'
+        to TurboFrameMessagesPage
 
         then: 'list starts empty'
         waitFor { messageCount.text() == '0' }
@@ -55,7 +55,7 @@ class ExampleMessagesGebSpec extends GebIntegrationSpec {
 
         when: 'refreshing and scrolling the lazy frame into view'
         driver.navigate().refresh()
-        waitFor { at ExampleMessagesPage }
+        waitFor { at TurboFrameMessagesPage }
         scrollLazyFrameIntoView()
 
         then: 'lazy-loaded frame content replaces the placeholder (controller uses ~1s delay)'

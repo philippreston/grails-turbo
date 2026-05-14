@@ -4,9 +4,9 @@ import geb.Page
 import org.openqa.selenium.JavascriptExecutor
 
 /**
- * Turbo example messages demo (/example/index).
+ * Page object for the Turbo Frame messages demo ({@code /example/index}).
  */
-class ExampleMessagesPage extends Page {
+class TurboFrameMessagesPage extends Page {
 
     static url = '/example/index'
 
