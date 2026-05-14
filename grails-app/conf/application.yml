@@ -78,5 +78,8 @@ grails:
       enableStreams: true
       streamSigningSecret: 'dev-stream-secret-change-me'
       globalIdApp: 'application'
+      enableActionCable: true
+      actionCablePath: '/cable'
+      actionCableAllowedOrigins: '*'
       metaOptions:
         cache-control: 'no-cache'

@@ -144,4 +144,15 @@ class TurboConfigSpec extends Specification {
         c.globalIdApp == 'myapp'
     }
 
+    void "default action cable options"() {
+        given:
+        TurboConfig c = new TurboConfig()
+
+        expect:
+        c.enableActionCable
+        c.actionCablePath == '/cable'
+        c.actionCableAllowedOrigins == '*'
+        c.actionCablePingIntervalSeconds == 3
+    }
+
 }

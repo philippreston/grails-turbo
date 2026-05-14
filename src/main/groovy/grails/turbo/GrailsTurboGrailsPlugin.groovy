@@ -1,6 +1,11 @@
 package grails.turbo
 
 import grails.plugins.*
+import grails.turbo.cable.ActionCableHandshakeHandler
+import grails.turbo.cable.ActionCableTurboStreamPublisher
+import grails.turbo.cable.ActionCableWebSocketHandler
+import grails.turbo.cable.TurboActionCableWebSocketConfiguration
+import grails.turbo.cable.TurboStreamSubscriptionRegistry
 import grails.turbo.config.TurboConfig
 
 import org.springframework.core.task.SimpleAsyncTaskExecutor
@@ -54,7 +59,18 @@ over HTTP and WebSocket connections.
         // Register configuration
         turboConfig(TurboConfig)
 
-        turboStreamPublisher(NoOpTurboStreamPublisher)
+        turboStreamSubscriptionRegistry(TurboStreamSubscriptionRegistry)
+        actionCableHandshakeHandler(ActionCableHandshakeHandler)
+        actionCableWebSocketHandler(ActionCableWebSocketHandler) { bean ->
+            bean.autowire = true
+        }
+        turboActionCableWebSocketConfiguration(TurboActionCableWebSocketConfiguration) { bean ->
+            bean.autowire = true
+        }
+
+        turboStreamPublisher(ActionCableTurboStreamPublisher) { bean ->
+            bean.autowire = true
+        }
 
         turboStreamTaskExecutor(SimpleAsyncTaskExecutor)
 
@@ -96,6 +112,22 @@ over HTTP and WebSocket connections.
             }
             if (config.containsKey('metaOptions')) {
                 turboConfig.metaOptions = config.metaOptions as Map<String, String>
+            }
+            if (config.containsKey('enableActionCable')) {
+                turboConfig.enableActionCable = config.enableActionCable as boolean
+            }
+            if (config.containsKey('actionCablePath')) {
+                turboConfig.actionCablePath = config.actionCablePath as String
+            }
+            if (config.containsKey('actionCableAllowedOrigins')) {
+                turboConfig.actionCableAllowedOrigins = config.actionCableAllowedOrigins as String
+            }
+            if (config.containsKey('actionCableUrl')) {
+                turboConfig.actionCableUrl = config.actionCableUrl as String
+            }
+            if (config.containsKey('actionCablePingIntervalSeconds')) {
+                Object v = config.actionCablePingIntervalSeconds
+                turboConfig.actionCablePingIntervalSeconds = (v instanceof Number) ? ((Number) v).intValue() : Integer.parseInt(v.toString())
             }
         }
 

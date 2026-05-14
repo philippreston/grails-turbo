@@ -8,7 +8,7 @@ import org.springframework.web.context.request.RequestContextHolder
 
 /**
  * Service for creating and broadcasting Turbo Stream messages.
- * Broadcaster methods send HTML to {@link TurboStreamPublisher} (replace that bean for Redis/Cable/STOMP, etc.).
+ * Broadcaster methods send HTML to {@link TurboStreamPublisher} (default: in-memory Action Cable; replace the bean for Redis-backed fan-out, etc.).
  */
 class TurboStreamService {
 
@@ -319,12 +319,8 @@ class TurboStreamService {
             throw new IllegalArgumentException('streamables cannot be blank')
         }
         String app = turboConfig?.globalIdApp ?: 'application'
-        String canonical = TurboStreamName.fromIterable(list, app)
-        String secret = turboConfig?.streamSigningSecret?.trim()
-        if (secret) {
-            return new TurboRailsMessageVerifier(secret).generate(canonical)
-        }
-        canonical
+        // Same key as turbo-rails after verifying signed_stream_name (unsigned canonical name).
+        TurboStreamName.fromIterable(list, app)
     }
 
     private void runLater(Runnable task) {

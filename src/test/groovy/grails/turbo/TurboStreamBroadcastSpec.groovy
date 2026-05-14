@@ -29,17 +29,16 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         publisher.calls[0].html.contains('target="messages"')
     }
 
-    void 'broadcastAppendTo signs stream name when streamSigningSecret is set'() {
+    void 'broadcastAppendTo publishes canonical stream name when streamSigningSecret is set (Rails parity)'() {
         given:
         service.turboConfig = new TurboConfig(globalIdApp: 'myapp', streamSigningSecret: 's3cr3t')
-        def verifier = new TurboRailsMessageVerifier('s3cr3t')
 
         when:
         service.broadcastAppendTo('solo', 't', '<p/>')
 
         then:
         publisher.calls.size() == 1
-        verifier.verified(publisher.calls[0].streamName as String) == 'solo'
+        publisher.calls[0].streamName == 'solo'
     }
 
     void 'broadcastAppendLater invokes publisher asynchronously via executor'() {

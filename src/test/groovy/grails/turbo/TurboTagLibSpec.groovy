@@ -11,7 +11,7 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
 
     def setup() {
         // Initialize turboConfig for the taglib
-        tagLib.turboConfig = new TurboConfig(streamSigningSecret: 'secret')
+        tagLib.turboConfig = new TurboConfig(streamSigningSecret: 'secret', enableActionCable: true, actionCablePath: '/cable')
     }
 
     void "test frame tag with required id"() {
@@ -302,6 +302,8 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         output.contains('<script type="module"')
         output.contains('turbo@8.0.4')
         output.contains('turbo.es2017-esm.js')
+        output.contains('action-cable-url')
+        output.contains('/cable')
     }
 
     void "test includeTurbo tag with custom version"() {
@@ -310,6 +312,17 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
 
         then:
         output.contains('turbo@7.3.0')
+    }
+
+    void "includeTurbo omits action-cable-url when enableActionCable false"() {
+        given:
+        tagLib.turboConfig = new TurboConfig(streamSigningSecret: 'secret', enableActionCable: false)
+
+        when:
+        def output = applyTemplate('<turbo:includeTurbo/>')
+
+        then:
+        !output.contains('action-cable-url')
     }
 
     void "turboDomId persisted id"() {

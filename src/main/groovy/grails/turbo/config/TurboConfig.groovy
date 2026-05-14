@@ -62,5 +62,32 @@ class TurboConfig {
      * Custom Turbo configuration options to be added as meta tags.
      */
     Map<String, String> metaOptions = [:]
+
+    /**
+     * When true, registers an Action Cable–compatible WebSocket endpoint and
+     * {@link grails.turbo.cable.ActionCableTurboStreamPublisher} for {@code turbo-cable-stream-source}.
+     */
+    boolean enableActionCable = true
+
+    /**
+     * WebSocket mount path for Action Cable (default matches Rails).
+     */
+    String actionCablePath = '/cable'
+
+    /**
+     * Allowed origins for the cable WebSocket handshake (comma-separated, or a single {@code *}).
+     */
+    String actionCableAllowedOrigins = '*'
+
+    /**
+     * Value for {@code <meta name="action-cable-url" content="...">}; relative (e.g. {@code /cable}) or absolute WS URL.
+     * When null, {@link #actionCablePath} is used for the meta tag.
+     */
+    String actionCableUrl
+
+    /**
+     * Action Cable ping interval in seconds (Rails-style heartbeat).
+     */
+    int actionCablePingIntervalSeconds = 3
 }
 

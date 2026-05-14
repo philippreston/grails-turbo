@@ -221,6 +221,11 @@ class TurboTagLib implements TagLibrary {
             out << "<script type=\"module\" src=\"${cdnUrl}@${version}/dist/turbo.es2017-esm.js\"></script>"
         }
 
+        if (turboConfig?.enableStreams && turboConfig?.enableActionCable) {
+            String cableUrl = turboConfig.actionCableUrl ?: turboConfig.actionCablePath ?: '/cable'
+            out << "<meta name=\"action-cable-url\" content=\"${escapeAttr(cableUrl)}\">"
+        }
+
         // Add meta tags from configuration
         if (turboConfig?.metaOptions) {
             turboConfig.metaOptions.each { key, value ->
