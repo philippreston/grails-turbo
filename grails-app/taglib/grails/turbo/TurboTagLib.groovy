@@ -152,7 +152,7 @@ class TurboTagLib implements TagLibrary {
             throwTagError("Tag [streamFrom] is missing required attribute [streamables]")
         }
 
-        List<?> streamables = normalizeStreamablesList(raw)
+        List<?> streamables = TurboStreamName.normalizeStreamables(raw)
         if (streamables.isEmpty()) {
             throwTagError('Tag [streamFrom] requires non-blank streamables')
         }
@@ -321,22 +321,5 @@ class TurboTagLib implements TagLibrary {
 
     private static boolean safeAttributeName(String name) {
         name ==~ /[a-zA-Z_:][a-zA-Z0-9_:.-]*/
-    }
-
-    private static List<Object> normalizeStreamablesList(Object raw) {
-        if (raw == null) {
-            return []
-        }
-        if (raw instanceof Object[]) {
-            return (raw as Object[]).toList()
-        }
-        if (raw instanceof Iterable && !(raw instanceof Map)) {
-            List<Object> list = []
-            for (Object o : (Iterable<?>) raw) {
-                list << o
-            }
-            return list
-        }
-        [raw]
     }
 }

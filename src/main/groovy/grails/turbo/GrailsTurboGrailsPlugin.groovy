@@ -3,6 +3,8 @@ package grails.turbo
 import grails.plugins.*
 import grails.turbo.config.TurboConfig
 
+import org.springframework.core.task.SimpleAsyncTaskExecutor
+
 /**
  * Grails Turbo Plugin
  *
@@ -51,6 +53,10 @@ over HTTP and WebSocket connections.
     Closure doWithSpring() { {->
         // Register configuration
         turboConfig(TurboConfig)
+
+        turboStreamPublisher(NoOpTurboStreamPublisher)
+
+        turboStreamTaskExecutor(SimpleAsyncTaskExecutor)
 
         // Register TurboStreamService
         turboStreamService(TurboStreamService) { bean ->
