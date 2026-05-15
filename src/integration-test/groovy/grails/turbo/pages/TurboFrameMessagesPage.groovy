@@ -29,14 +29,15 @@ class TurboFrameMessagesPage extends Page {
     }
 
     /**
-     * Deletes the message card whose heading matches {@code title}. Turbo uses {@code data-turbo-confirm}.
+     * Deletes the message card whose heading matches {@code title}.
+     * Turbo {@code data-turbo-confirm} uses {@code window.confirm}; headless Chrome often does not
+     * expose that as a WebDriver {@code alert}, so we stub {@code confirm} to accept.
      */
     void deleteMessageWithTitle(String title) {
         def card = $('[id^=message_]').has('h5.card-title', text: title)
         waitFor { card.displayed }
-        withConfirm(true) {
-            card.find('button.btn-danger').click()
-        }
+        browser.js.exec('window.confirm = function() { return true; }')
+        card.find('button.btn-danger').click()
     }
 
     void scrollLazyFrameIntoView() {

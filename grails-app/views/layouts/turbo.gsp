@@ -11,8 +11,8 @@
 
     <asset:stylesheet src="application.css"/>
 
-    <!-- Turbo JavaScript - loaded via tag library with configuration support -->
-    <turbo:includeTurbo/>
+    <!-- Turbo: metas in head; script loads at end of body after DOM is ready -->
+    <turbo:includeTurbo metasOnly="true"/>
 
     <g:layoutHead/>
 </head>
@@ -69,8 +69,8 @@
     <g:message code="spinner.alt" default="Loading&hellip;"/>
 </div>
 
+<turbo:includeTurbo scriptsOnly="true"/>
 <asset:javascript src="application.js"/>
 
 </body>
 </html>
-

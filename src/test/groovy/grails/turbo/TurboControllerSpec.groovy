@@ -141,6 +141,15 @@ class TurboControllerSpec extends Specification implements ControllerUnitTest<Te
         response.redirectedUrl != null
     }
 
+    void "test respondWithTurbo html block resolves flash on controller"() {
+        when:
+        controller.testRespondWithTurboAndFlash()
+
+        then:
+        response.redirectedUrl != null
+        flash.message == 'ok'
+    }
+
     void "test respondWithTurbo handles multiple format blocks"() {
         when:
         controller.testRespondWithTurboWithJson()
@@ -165,6 +174,18 @@ class TestTurboController implements TurboController, Controller {
     def testRespondWithTurbo() {
         respondWithTurbo {
             html {
+                redirect(action: 'index')
+            }
+            turboStream {
+                append('messages', '<div>test</div>')
+            }
+        }
+    }
+
+    def testRespondWithTurboAndFlash() {
+        respondWithTurbo {
+            html {
+                flash.message = 'ok'
                 redirect(action: 'index')
             }
             turboStream {

@@ -210,32 +210,104 @@ class TurboTagLib implements TagLibrary {
      * Include Turbo JavaScript library.
      * Uses configuration from TurboConfig if available.
      *
-     * @attr version - Turbo version to use (overrides config)
-     * @attr cdnUrl - CDN URL to use (overrides config)
+     * When {@link TurboConfig#enableStreams} and {@link TurboConfig#enableActionCable} are both true,
+     * loads the {@code @hotwired/turbo-rails} browser bundle (Turbo + Action Cable + {@code turbo-cable-stream-source}).
+     * Otherwise loads the {@code @hotwired/turbo} ESM build only.
+     *
+     * For correct load order, use {@code metasOnly="true"} in {@code layout head} and {@code scriptsOnly="true"}
+     * before other scripts at the end of {@code body}. Omit both for a single combined include (metas then script).
+     *
+     * @attr version - Turbo / turbo-rails version when using CDN (overrides config)
+     * @attr cdnUrl - CDN base for Turbo ESM only (overrides config); not used for turbo-rails bundle
+     * @attr turboRailsVersion - optional override for {@code @hotwired/turbo-rails} version (defaults to {@code version} / config)
+     * @attr metasOnly - if true, emit only meta tags (for {@code head})
+     * @attr scriptsOnly - if true, emit only script tag(s) (for end of {@code body})
      */
     Closure includeTurbo = { attrs ->
-        String version = attrs.version ?: turboConfig?.turboVersion
-        String cdnUrl = attrs.cdnUrl ?: turboConfig?.cdnUrl
+        Map m = attrs != null ? new LinkedHashMap(attrs as Map) : [:]
+        boolean metasOnly = truthy(m.remove('metasOnly'))
+        boolean scriptsOnly = truthy(m.remove('scriptsOnly'))
 
-        if (turboConfig?.useCdn) {
-            out << "<script type=\"module\" src=\"${cdnUrl}@${version}/dist/turbo.es2017-esm.js\"></script>"
+        String version = (m.remove('version') ?: turboConfig?.turboVersion)?.toString()
+        String cdnUrl = (m.remove('cdnUrl') ?: turboConfig?.cdnUrl)?.toString()
+        String turboRailsVersion = (m.remove('turboRailsVersion') ?: version)?.toString()
+
+        if (metasOnly && scriptsOnly) {
+            throwTagError('Tag [includeTurbo] cannot set both [metasOnly] and [scriptsOnly]')
         }
 
-        if (turboConfig?.enableStreams && turboConfig?.enableActionCable) {
-            String cableUrl = turboConfig.actionCableUrl ?: turboConfig.actionCablePath ?: '/cable'
+        if (!scriptsOnly) {
+            writeIncludeTurboMetas(out, cableStreams())
+        }
+        if (!metasOnly) {
+            writeIncludeTurboScript(out, version, cdnUrl, turboRailsVersion, cableStreams())
+        }
+    }
+
+    private boolean cableStreams() {
+        turboConfig?.enableStreams && turboConfig?.enableActionCable
+    }
+
+    private void writeIncludeTurboMetas(Writer out, boolean cableStreamsEnabled) {
+        if (cableStreamsEnabled) {
+            String configured = turboConfig.actionCableUrl ?: turboConfig.actionCablePath ?: '/cable'
+            String cableUrl = resolveActionCableWebSocketUrl(configured)
             out << "<meta name=\"action-cable-url\" content=\"${escapeAttr(cableUrl)}\">"
         }
 
-        // Add meta tags from configuration
         if (turboConfig?.metaOptions) {
             turboConfig.metaOptions.each { key, value ->
                 out << "<meta name=\"turbo-${key}\" content=\"${value}\">"
             }
         }
 
-        // Add Drive configuration if disabled
         if (turboConfig && !turboConfig.enableDrive) {
             out << "<meta name=\"turbo-visit-control\" content=\"reload\">"
+        }
+    }
+
+    /**
+     * Rails-style Action Cable URL for {@code <meta name="action-cable-url">}: when the configured value is
+     * a path (no {@code ://}), build {@code ws(s)://host:port/path} from the current request so browser clients
+     * (e.g. @rails/actioncable) connect reliably on non-default ports and in headless integration tests.
+     */
+    private String resolveActionCableWebSocketUrl(String configured) {
+        if (!configured) {
+            configured = '/cable'
+        }
+        if (configured.contains('://')) {
+            return configured
+        }
+        String path = configured.startsWith('/') ? configured : "/${configured}"
+        try {
+            def req = request
+            if (req != null) {
+                String httpScheme = req.scheme?.toLowerCase(Locale.ROOT) ?: 'http'
+                String wsScheme = 'https' == httpScheme ? 'wss' : 'ws'
+                String host = req.serverName ?: 'localhost'
+                int port = req.serverPort
+                boolean defaultPort = port <= 0 ||
+                    ('http' == httpScheme && port == 80) ||
+                    ('https' == httpScheme && port == 443)
+                String portPart = defaultPort ? '' : ":${port}"
+                return "${wsScheme}://${host}${portPart}${path}"
+            }
+        } catch (Exception ignored) {
+            // No request in context (e.g. some unit tests): fall back to path-only
+        }
+        return path
+    }
+
+    private void writeIncludeTurboScript(Writer out, String version, String cdnUrl, String turboRailsVersion, boolean cableStreamsEnabled) {
+        if (!turboConfig?.useCdn) {
+            return
+        }
+        if (cableStreamsEnabled) {
+            // npm package "main" is an ES module (ends with export { Turbo, cable }); must use type="module".
+            out << '<script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo-rails@' << escapeAttr(turboRailsVersion)
+            out << '/app/assets/javascripts/turbo.min.js"></script>'
+        } else {
+            out << "<script type=\"module\" src=\"${escapeAttr(cdnUrl)}@${escapeAttr(version)}/dist/turbo.es2017-esm.js\"></script>"
         }
     }
 

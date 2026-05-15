@@ -155,10 +155,16 @@ trait TurboController {
                 renderTurboStream(formats[format] as Closure)
             } else {
                 def handler = formats[format] as Closure
+                // Nested format closures were built while the outer closure's delegate was the
+                // format Expando; re-bind so controller scopes (e.g. flash) and actions resolve.
+                handler.delegate = this
+                handler.resolveStrategy = Closure.DELEGATE_FIRST
                 handler.call()
             }
         } else if (formats.containsKey('html')) {
             def handler = formats['html'] as Closure
+            handler.delegate = this
+            handler.resolveStrategy = Closure.DELEGATE_FIRST
             handler.call()
         }
     }

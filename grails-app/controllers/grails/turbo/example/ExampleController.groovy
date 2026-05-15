@@ -2,6 +2,13 @@ package grails.turbo.example
 
 import grails.gorm.transactions.Transactional
 import grails.turbo.TurboController
+import grails.turbo.TurboStreamService
+import grails.util.Environment
+import org.springframework.core.task.TaskExecutor
+
+import java.text.SimpleDateFormat
+import java.util.TimeZone
+import java.util.concurrent.TimeUnit
 
 /**
  * Example controller demonstrating Turbo integration.
@@ -10,6 +17,8 @@ import grails.turbo.TurboController
 class ExampleController implements TurboController {
 
     def groovyPageRenderer
+    TurboStreamService turboStreamService
+    TaskExecutor turboStreamTaskExecutor
 
 
     def index() {
@@ -25,24 +34,14 @@ class ExampleController implements TurboController {
             // Return empty list if Message domain is not available
         }
 
-        [messages: messages, messageCount: messageCount]
+        [messages: messages, messageCount: messageCount, lazyFrameLoading: Environment.current == Environment.TEST ? 'eager' : 'lazy']
     }
 
     /**
      * List messages with support for both HTML and Turbo Stream responses.
      */
     def list() {
-        def messages = Message.list(params)
-
-        // Respond with different formats based on the request
-        respondWithTurbo {
-            html {
-                render view: 'list', model: [messages: messages]
-            }
-            turboStream {
-                update 'messages', render(template: 'messages', collection: messages, var: 'message')
-            }
-        }
+        redirect action: 'index'
     }
 
     /**
@@ -77,7 +76,7 @@ class ExampleController implements TurboController {
             respondWithTurbo {
                 html {
                     flash.message = "Message created successfully"
-                    redirect action: 'list'
+                    redirect action: 'index'
                 }
                 turboStream {
                     // Remove the empty state message if this is the first message
@@ -164,10 +163,10 @@ class ExampleController implements TurboController {
         message.delete(flush: true)
 
         respondWithTurbo {
-            html {
-                flash.message = "Message deleted successfully"
-                redirect action: 'list'
-            }
+                html {
+                    flash.message = "Message deleted successfully"
+                    redirect action: 'index'
+                }
             turboStream {
                 // Remove the message from the list
                 remove "message_${message.id}"
@@ -175,6 +174,15 @@ class ExampleController implements TurboController {
                 update 'message-count', "${Message.count() ?: 0}"
             }
         }
+    }
+
+    /**
+     * Demo page for Turbo Streams over Action Cable: async status transitions for a dummy job.
+     */
+    def streamJobDemo() {
+        String jobId = UUID.randomUUID().toString()
+        scheduleJobStreamUpdates(jobId)
+        [jobId: jobId]
     }
 
     /**
@@ -206,10 +214,39 @@ class ExampleController implements TurboController {
         request.withFormat {
             html {
                 flash.message = "Message not found"
-                redirect action: 'list'
+                redirect action: 'index'
             }
             '*' { render status: 404 }
         }
+    }
+
+    private void scheduleJobStreamUpdates(String jobId) {
+        TaskExecutor exec = turboStreamTaskExecutor
+        TurboStreamService svc = turboStreamService
+        if (!exec || !svc) {
+            log.warn('turboStreamTaskExecutor or turboStreamService not available; stream job updates skipped')
+            return
+        }
+        List<?> streamables = ['streamDemo', jobId]
+        exec.execute {
+            sleep(TimeUnit.SECONDS.toMillis(2))
+            svc.broadcastUpdateTo(streamables, 'job-status-panel', jobStatusPanelInner('Running', utcNow()))
+        }
+        exec.execute {
+            sleep(TimeUnit.SECONDS.toMillis(7))
+            svc.broadcastUpdateTo(streamables, 'job-status-panel', jobStatusPanelInner('Complete', utcNow()))
+        }
+    }
+
+    private static String jobStatusPanelInner(String status, String timeLabel) {
+        """<span id="job-status">${status}</span>
+<span id="job-time">${timeLabel}</span>"""
+    }
+
+    private static String utcNow() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        sdf.setTimeZone(TimeZone.getTimeZone('UTC'))
+        sdf.format(new Date())
     }
 }
 

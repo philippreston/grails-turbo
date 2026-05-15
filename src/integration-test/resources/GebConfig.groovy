@@ -33,6 +33,7 @@ driver = {
     o.browserVersion = webDriverVersions.chromedriver
     o.addArguments('--headless=new')
     o.addArguments('--window-size=1600,900')
+    o.addArguments('--remote-allow-origins=*')
     new ChromeDriver(o)
 }
 
@@ -54,6 +55,7 @@ environments {
             o.browserVersion = webDriverVersions.chromedriver
             o.addArguments('--headless=new')
             o.addArguments('--window-size=1600,900')
+            o.addArguments('--remote-allow-origins=*')
             new ChromeDriver(o)
         }
     }

@@ -299,19 +299,19 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         def output = applyTemplate('<turbo:includeTurbo/>')
 
         then:
-        output.contains('<script type="module"')
-        output.contains('turbo@8.0.4')
-        output.contains('turbo.es2017-esm.js')
+        output.contains('<script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo-rails@8.0.4/app/assets/javascripts/turbo.min.js"></script>')
         output.contains('action-cable-url')
         output.contains('/cable')
+        !output.contains('turbo.es2017-esm.js')
     }
 
     void "test includeTurbo tag with custom version"() {
         when:
-        def output = applyTemplate('<turbo:includeTurbo version="7.3.0"/>')
+        def output = applyTemplate('<turbo:includeTurbo turboRailsVersion="7.3.0" version="7.3.0"/>')
 
         then:
-        output.contains('turbo@7.3.0')
+        output.contains('@hotwired/turbo-rails@7.3.0/')
+        output.contains('turbo.min.js')
     }
 
     void "includeTurbo omits action-cable-url when enableActionCable false"() {
@@ -323,6 +323,49 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
 
         then:
         !output.contains('action-cable-url')
+        output.contains('turbo.es2017-esm.js')
+    }
+
+    void "includeTurbo metasOnly emits cable meta without script"() {
+        when:
+        def output = applyTemplate('<turbo:includeTurbo metasOnly="true"/>')
+
+        then:
+        output.contains('action-cable-url')
+        !output.contains('turbo.min.js')
+        !output.contains('turbo.es2017-esm.js')
+    }
+
+    void "includeTurbo metasOnly builds ws cable URL from request for relative path"() {
+        given:
+        request.serverName = 'localhost'
+        request.serverPort = 5555
+        request.scheme = 'http'
+
+        when:
+        def output = applyTemplate('<turbo:includeTurbo metasOnly="true"/>')
+
+        then:
+        output.contains('content="ws://localhost:5555/cable"')
+    }
+
+    void "includeTurbo scriptsOnly emits turbo-rails script without cable meta"() {
+        when:
+        def output = applyTemplate('<turbo:includeTurbo scriptsOnly="true"/>')
+
+        then:
+        output.contains('<script type="module"')
+        output.contains('@hotwired/turbo-rails@8.0.4/')
+        output.contains('turbo.min.js')
+        !output.contains('action-cable-url')
+    }
+
+    void "includeTurbo rejects metasOnly and scriptsOnly together"() {
+        when:
+        applyTemplate('<turbo:includeTurbo metasOnly="true" scriptsOnly="true"/>')
+
+        then:
+        thrown(Exception)
     }
 
     void "turboDomId persisted id"() {

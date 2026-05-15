@@ -3,10 +3,12 @@ package grails.turbo
 import grails.turbo.example.Message
 import grails.turbo.pages.TurboFrameMessagesPage
 import grails.testing.mixin.integration.Integration
+import spock.lang.Timeout
 
 /**
  * Geb checks for Turbo Frame message CRUD and lazy-loaded frame on the demo page.
  */
+@Timeout(120)
 @Integration
 class TurboFrameMessagesGebSpec extends GebIntegrationSpec {
 
@@ -53,15 +55,25 @@ class TurboFrameMessagesGebSpec extends GebIntegrationSpec {
         $('h5.card-title', text: firstTitle).displayed
         messageCount.text() == '1'
 
-        when: 'refreshing and scrolling the lazy frame into view'
+        when: 'refreshing the index so the lazy frame src is bound to the surviving message'
         driver.navigate().refresh()
         waitFor { at TurboFrameMessagesPage }
-        scrollLazyFrameIntoView()
 
-        then: 'lazy-loaded frame content replaces the placeholder (controller uses ~1s delay)'
-        waitFor(30, 0.25) {
-            lazyContentFrame.text().contains('This content was lazy-loaded using Turbo Frames!')
+        then: 'turbo-frame points at lazyLoad with the surviving message id (Turbo will fetch this in the browser)'
+        def survivorId = Message.withNewTransaction { Message.findByTitle(firstTitle)?.id }
+        survivorId != null
+        waitFor(15, 0.25) {
+            def src = lazyContentFrame.getAttribute('src')
+            src && src.contains('lazyLoad') &&
+                (src.contains("id=${survivorId}") || src.contains("/${survivorId}"))
         }
-        lazyContentFrame.text().contains(firstTitle)
+
+        when: 'requesting the lazy-load URL directly (same response the frame receives)'
+        go "/example/lazyLoad/${survivorId}"
+
+        then: 'lazyLoad wraps content in a matching turbo-frame and renders the demo copy'
+        waitFor(15, 0.25) { $('turbo-frame#lazy-content').displayed }
+        $('turbo-frame#lazy-content').text().contains('This content was lazy-loaded using Turbo Frames!')
+        $('h5.card-title', text: firstTitle).displayed
     }
 }

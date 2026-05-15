@@ -9,6 +9,10 @@
 <div class="container mt-4">
     <h1>Turbo Examples</h1>
 
+    <p>
+        <g:link controller="example" action="streamJobDemo" class="btn btn-outline-primary btn-sm">Turbo Stream job demo</g:link>
+    </p>
+
     <div class="alert alert-info">
         <strong>Turbo Status:</strong>
         <g:if test="${isTurboRequest}">
@@ -59,7 +63,7 @@
             <turbo:frame
                 id="lazy-content"
                 src="${createLink(controller: 'example', action: 'lazyLoad', params: messages ? [id: messages[0].id] : [:])}"
-                loading="lazy">
+                loading="${lazyFrameLoading ?: 'lazy'}">
                 <div class="text-center p-4">
                     <div class="spinner-border" role="status">
                         <span class="sr-only">Loading...</span>
