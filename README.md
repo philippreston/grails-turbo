@@ -9,38 +9,57 @@ This plugin is inspired by [turbo-rails](https://github.com/hotwired/turbo-rails
 - **Turbo Drive**: Fast page navigation without full page reloads
 - **Turbo Frames**: Lazy-loading and scoped page updates
 - **Turbo Streams**: Real-time partial page updates over HTTP and WebSocket
+- **Action Cable–compatible WebSocket**: Optional **`/cable`** endpoint for **`turbo-cable-stream-source`** (Turbo Streams subscriptions)
 - **Easy Integration**: Tag libraries, traits, and services for seamless Grails integration
 - **Request Detection**: Automatic detection of Turbo requests and frame requests
 
 ## Installation
 
-Add the plugin to your `build.gradle`:
+Add the dependency in `build.gradle` (coordinates match this project’s `group` and `version` in [`gradle.properties`](gradle.properties); adjust if you consume a published artifact with different naming):
 
 ```gradle
 dependencies {
-    implementation 'grails.turbo:grails-turbo:0.1'
+    implementation 'grails.turbo:grails-turbo:0.2.0'
 }
+```
+
+Register the Turbo Stream MIME type if it is not already present (the plugin also tries to register it at runtime):
+
+```yaml
+grails:
+  mime:
+    types:
+      turbo_stream:
+      - text/vnd.turbo-stream.html
 ```
 
 ## Quick Start
 
-### 1. Include Turbo in Your Layout
+### 1. Include Turbo in your layout
 
-The plugin automatically includes Turbo JavaScript. You can also manually include it in your layout:
+Turbo is **not** injected automatically. Use **`turbo:includeTurbo`** in your layouts (the plugin demo uses the [Asset Pipeline](https://github.com/bertramdev/asset-pipeline) but Turbo itself is loaded from the CDN by default, not from `application.js`).
+
+**Recommended** (matches **turbo-rails** load order: metas in `<head>`, script after DOM, before your app JS):
 
 ```gsp
 <!DOCTYPE html>
 <html>
 <head>
     <title><g:layoutTitle default="My App"/></title>
-    <asset:javascript src="application.js"/>
-    <turbo:includeTurbo/>
+    <turbo:includeTurbo metasOnly="true"/>
+    <g:layoutHead/>
 </head>
 <body>
     <g:layoutBody/>
+    <turbo:includeTurbo scriptsOnly="true"/>
+    <asset:javascript src="application.js"/>
 </body>
 </html>
 ```
+
+**Single tag** (metas + script together): `<turbo:includeTurbo/>` — still place the script **before** `application.js` if that bundle depends on Turbo.
+
+When **`enableStreams`** and **`enableActionCable`** are both true, the tag loads **`@hotwired/turbo-rails`** from jsDelivr as a **`type="module"`** script (`turbo.min.js`: Turbo, Action Cable, and `turbo-cable-stream-source` support). Otherwise it loads **`@hotwired/turbo`** only (`turbo.es2017-esm.js`). With **`useCdn: false`**, no script is emitted (host the bundle yourself via the Asset Pipeline or static assets).
 
 ### 2. Using Turbo Frames
 
@@ -64,13 +83,15 @@ Link to update just that frame:
 
 ### 3. Using Turbo Streams
 
-In your controller, use the `TurboController` trait:
+In your controller, implement **`TurboController`** and use **`respondWithTurbo`** (or **`renderTurboStream`**). For **`renderTemplate()`** / fragment strings inside those closures, declare **`def groovyPageRenderer`** on the controller (Grails injects it; the trait documents this requirement).
 
 ```groovy
 import grails.turbo.TurboController
 
 class MessageController implements TurboController {
-    
+
+    def groovyPageRenderer
+
     def create() {
         def message = new Message(params)
         message.save()
@@ -87,7 +108,7 @@ class MessageController implements TurboController {
 }
 ```
 
-Or render Turbo Streams directly:
+Or render Turbo Streams directly (same **`groovyPageRenderer`** requirement if you use **`render(...)`** for templates):
 
 ```groovy
 def update() {
@@ -100,6 +121,8 @@ def update() {
     }
 }
 ```
+
+> **Note:** Without `groovyPageRenderer` declared on the controller, `render(template: ...)` inside `renderTurboStream` / `respondWithTurbo` may not work as expected.
 
 ## Tag Library Reference
 
@@ -129,6 +152,7 @@ Rails-style `dom_id`: use `bean` (or composite `ids`) instead of hand-building t
 - `src`: URL to lazy-load content
 - `loading`: 'eager' or 'lazy' (default: 'eager')
 - `target`: Target frame for navigation
+- `busy`, `disabled`: Frame element boolean attributes (see taglib)
 - `autoscroll`: Auto-scroll to frame on update
 - Any other attributes (`class`, `style`, `data-*`, `aria-*`, etc.) are passed through to `<turbo-frame>` (or to the fallback `<div>` when `enableFrames: false`).
 
@@ -155,10 +179,12 @@ Creates a Turbo Stream element (typically used in views):
 ```
 
 **Attributes:**
-- `action` (required): append, prepend, replace, update, remove, before, after
+- `action` (required): `append`, `prepend`, `replace`, `update`, `remove`, `before`, `after`, `refresh`
 - `target`: Target element ID
 - `targets`: CSS selector for multiple targets
 - `morph`: when `true` on replace/update style actions, sets `method="morph"` on the element (morphing updates)
+
+For **`action="refresh"`**, a **`target`** (or **`targets`**) is still required by the taglib (e.g. `target="page"`).
 
 ### turbo:streamFrom
 
@@ -171,15 +197,26 @@ Subscribes to Turbo Streams over Action Cable (Rails **`turbo_stream_from`** sty
 - **`streamables`** (required): strings and/or domain objects (see `TurboStreamName`); objects are encoded with `gid://{globalIdApp}/…` semantics.
 - Configure a non-empty **`streamSigningSecret`** (`grails.plugin.turbo`). Signing matches Rails **`ActiveSupport::MessageVerifier`** (SHA256 digest, JSON serialization); implementation is **`TurboRailsMessageVerifier`**.
 - With **`enableStreams: false`**, the tag emits an HTML comment and no subscription element.
+- With **`enableStreams: true`** and **`enableActionCable: false`**, HTTP Turbo Streams still work, but **`turbo:streamFrom`** and the Action Cable meta tag are skipped; **`includeTurbo`** loads **`@hotwired/turbo`** only (no Rails cable bundle).
+- With **`enableActionCable: true`**, the plugin exposes a WebSocket endpoint (default **`/cable`**) compatible with **`@rails/actioncable`**. Use both **`enableStreams`** and **`enableActionCable`** for **`turbo-cable-stream-source`** unless you supply your own publisher.
 
 Prefer **`turbo:streamFrom`** over **`turbo:cableStreamSource`**, which is deprecated for manually wiring the same markup.
 
 ### turbo:includeTurbo
 
-Includes the Turbo JavaScript library:
+Loads Turbo from the CDN according to configuration (see Quick Start).
+
+**Attributes:**
+- **`metasOnly="true"`** — emit only `<meta>` tags (e.g. `action-cable-url`, `turbo-*` from `metaOptions`, drive disable) for the `<head>`.
+- **`scriptsOnly="true"`** — emit only the script tag(s) at the end of `<body>`.
+- **`version`** — Turbo version; also used as default **`turbo-rails`** version unless **`turboRailsVersion`** is set.
+- **`turboRailsVersion`** — override npm version for **`@hotwired/turbo-rails`** when streams + cable are enabled.
+- **`cdnUrl`** — base URL for **`@hotwired/turbo`** ESM only (not used for the turbo-rails bundle).
+
+Relative **`actionCablePath`** / **`actionCableUrl`** values are turned into a full **`ws:`** / **`wss:`** URL in the `action-cable-url` meta when possible so browsers connect on non-default ports.
 
 ```gsp
-<turbo:includeTurbo version="8.0.4"/>
+<turbo:includeTurbo version="8.0.4" turboRailsVersion="8.0.4"/>
 ```
 
 ## Controller Support
@@ -238,24 +275,26 @@ renderTurboStream {
 
 ### TurboStreamService
 
-Inject and use the service for building Turbo Stream responses:
+Inject the service to build stream markup or **broadcast** over the configured **`TurboStreamPublisher`** (default: in-process Action Cable fan-out):
 
 ```groovy
 class MyService {
     TurboStreamService turboStreamService
-    
-    String buildUpdate(Message message) {
-        return turboStreamService.builder()
-            .append('messages', renderMessage(message))
-            .update('unread-count', message.unreadCount.toString())
+
+    String buildAppend(String html) {
+        turboStreamService.builder()
+            .append('messages', html)
+            .update('unread-count', '3')
             .build()
     }
 }
 ```
 
+Use **`broadcastUpdateTo`**, **`broadcastAppendTo`**, and related methods from controllers/services to push updates to **`turbo:streamFrom`** subscribers (requires Action Cable enabled and clients subscribed).
+
 ## Request Detection
 
-The plugin adds an interceptor that automatically detects Turbo requests and adds attributes:
+The plugin registers **`TurboInterceptor`** (order **100**) so attributes are available on every request. Interceptors with order **&lt; 100** run before it.
 
 In GSP views:
 ```gsp
@@ -278,12 +317,19 @@ grails:
     turbo:
       turboVersion: '8.0.4'
       useCdn: true
-      cdnUrl: 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'  # optional override
+      cdnUrl: 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'  # Turbo-only ESM; optional override
       enableDrive: true
       enableFrames: true
       enableStreams: true
+      enableActionCable: true
+      actionCablePath: '/cable'
+      actionCableAllowedOrigins: '*'   # comma-separated, or * 
+      actionCableUrl: null             # optional; full ws(s) URL for meta, else path + request host
+      actionCablePingIntervalSeconds: 3
       streamSigningSecret: 'change-me-in-production'   # required for turbo:streamFrom signing
       globalIdApp: 'application'                        # gid:// segment for streamable domain objects
+      metaOptions:                                       # -> <meta name="turbo-{key}" content="...">
+        cache-control: 'no-cache'
 ```
 
 With **`enableStreams: false`**, the plugin does not promote the `turbo_stream` format from `Accept` and `acceptsTurboStream()` is always false; subscription tags that depend on streams emit a skip comment instead of markup.
@@ -326,12 +372,13 @@ respondWithTurbo {
 
 ## Examples
 
-See the example application in the `examples` directory for complete working examples of:
-- CRUD operations with Turbo Streams
-- Real-time updates
-- Lazy-loaded frames
-- Nested frames
-- Form submissions with Turbo
+This repository is a **plugin and runnable demo**. See:
+
+- [`grails-app/controllers/grails/turbo/example/ExampleController.groovy`](grails-app/controllers/grails/turbo/example/ExampleController.groovy) — frames, HTTP turbo streams, Action Cable demo (`streamJobDemo`), lazy-load action
+- [`grails-app/views/example/`](grails-app/views/example/) — Turbo Frame message UI, stream job page, templates
+- [`grails-app/views/layouts/turbo.gsp`](grails-app/views/layouts/turbo.gsp) — reference layout (`metasOnly` / `scriptsOnly`)
+
+Geb smoke tests under [`src/integration-test/groovy/grails/turbo/`](src/integration-test/groovy/grails/turbo/) cover the messages demo, cable WebSocket broadcast, and **streamJobDemo** in a browser.
 
 ## Resources
 
