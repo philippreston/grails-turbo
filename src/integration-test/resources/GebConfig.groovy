@@ -27,6 +27,14 @@ if(overrideUrl) {
 
 atCheckWaiting = true
 
+/** Chrome flags commonly required on GitHub Actions / Docker (sandbox, small /dev/shm). */
+private static void addCiChromeFlags(ChromeOptions o) {
+    if (System.getenv('GITHUB_ACTIONS') || System.getenv('CI')) {
+        o.addArguments('--no-sandbox')
+        o.addArguments('--disable-dev-shm-usage')
+    }
+}
+
 // Default when geb.env is unset (Chrome headless works without Edge on macOS/Linux CI)
 driver = {
     ChromeOptions o = new ChromeOptions()
@@ -34,6 +42,7 @@ driver = {
     o.addArguments('--headless=new')
     o.addArguments('--window-size=1600,900')
     o.addArguments('--remote-allow-origins=*')
+    addCiChromeFlags(o)
     new ChromeDriver(o)
 }
 
@@ -56,6 +65,7 @@ environments {
             o.addArguments('--headless=new')
             o.addArguments('--window-size=1600,900')
             o.addArguments('--remote-allow-origins=*')
+            addCiChromeFlags(o)
             new ChromeDriver(o)
         }
     }
