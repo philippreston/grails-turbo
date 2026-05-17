@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit
  */
 class ExampleController implements TurboController {
 
-    def groovyPageRenderer
     TurboStreamService turboStreamService
     TaskExecutor turboStreamTaskExecutor
 
