@@ -1,5 +1,6 @@
 package grails.turbo
 
+import grails.util.Holders
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.springframework.web.context.request.RequestContextHolder
 
@@ -10,12 +11,27 @@ import org.springframework.web.context.request.RequestContextHolder
  */
 trait TurboController {
 
-    // FIXME - make this work without requiring the controller to define a groovyPageRenderer property
     /**
-     * Injected groovyPageRenderer service for rendering templates to strings.
-     * This is automatically available to all controllers implementing this trait.
+     * Injected by Grails like any other controller dependency (same name as the Spring bean).
+     * Unit tests may assign a mock; otherwise {@link #resolveGroovyPageRenderer()} falls back
+     * to {@code Holders.applicationContext}.
      */
-    abstract def getGroovyPageRenderer()
+    def groovyPageRenderer
+
+    /**
+     * Lazily resolves the page renderer when the composed controller did not receive injection
+     * (uncommon in runtime; useful in tests).
+     */
+    def resolveGroovyPageRenderer() {
+        if (groovyPageRenderer != null) {
+            return groovyPageRenderer
+        }
+        try {
+            return Holders.applicationContext?.getBean('groovyPageRenderer')
+        } catch (Exception ignored) {
+            return null
+        }
+    }
 
     /**
      * Render a template to a string for use in Turbo Streams.
@@ -26,18 +42,20 @@ trait TurboController {
      * @return String containing the rendered HTML
      */
     String renderTemplate(String templatePath, Map model) {
+        def renderer = resolveGroovyPageRenderer()
+        if (!renderer) {
+            return ""
+        }
         try {
             // Determine the controller path from the controller name
             def controllerPath = this.class.simpleName.replaceAll('Controller$', '').toLowerCase()
 
-            // Use groovyPageRenderer to render template to string
-            def result = groovyPageRenderer.render(
+            def result = renderer.render(
                 template: "/${controllerPath}/${templatePath}",
                 model: model
             )
             return result ?: ""
         } catch (Exception e) {
-            // Log error but don't fail the request
             println "Error rendering template ${templatePath}: ${e.message}"
             return ""
         }

@@ -163,7 +163,6 @@ class TurboControllerSpec extends Specification implements ControllerUnitTest<Te
  * Concrete test controller for testing TurboController trait.
  */
 class TestTurboController implements TurboController, Controller {
-    def groovyPageRenderer
 
     def testRenderTurboStream() {
         renderTurboStream {

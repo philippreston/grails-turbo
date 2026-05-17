@@ -21,6 +21,7 @@ class TurboTagLib implements TagLibrary {
      *
      * @attr id - Frame id (optional if {@code bean} or {@code ids} is set; see Rails dom_id)
      * @attr bean - Domain object used to derive id as Rails-style dom_id (uncapitalizedSimpleName_id, or new_uncapitalizedSimpleName if no id)
+     * @attr prefix - Optional segment prefixed before dom_id(bean), Rails {@code dom_id(record, :detail)} style (e.g. {@code edit} → {@code edit_message_1})
      * @attr ids - List of parts joined by "_" for composite frame ids (e.g. [userId, "tray"])
      * @attr src - The source URL to load
      * @attr loading - Loading behavior: 'eager' or 'lazy' (default: 'eager')
@@ -36,9 +37,10 @@ class TurboTagLib implements TagLibrary {
         String id = (String) m.remove('id')
         Object bean = m.remove('bean')
         Object idsAttr = m.remove('ids')
+        Object prefixAttr = m.remove('prefix')
 
         if (!id && bean != null) {
-            id = turboDomId(bean)
+            id = prefixAttr != null ? turboDomId(bean, prefixAttr) : turboDomId(bean)
         }
         if (!id && idsAttr != null) {
             id = joinCompositeIds(idsAttr)
@@ -207,6 +209,32 @@ class TurboTagLib implements TagLibrary {
     }
 
     /**
+     * Turbo Drive {@code turbo-visit-control} meta (reload, advance, etc.).
+     *
+     * @attr content - Meta content value (default {@code reload})
+     */
+    Closure visitControl = { attrs ->
+        Map m = attrs != null ? new LinkedHashMap(attrs as Map) : [:]
+        String content = (m.remove('content') ?: 'reload').toString()
+        out << "<meta name=\"turbo-visit-control\" content=\"${escapeAttr(content)}\">"
+    }
+
+    /**
+     * Turbo {@code turbo-cache-control} meta ({@code no-cache}, {@code no-preview}, …).
+     *
+     * @attr content REQUIRED
+     */
+    Closure cacheControl = { attrs ->
+        Map m = attrs != null ? new LinkedHashMap(attrs as Map) : [:]
+        String content = (String) m.remove('content')
+        if (!content?.trim()) {
+            throwTagError('Tag [cacheControl] is missing required attribute [content]')
+        }
+        String escaped = escapeAttr(content.trim())
+        out << "<meta name=\"turbo-cache-control\" content=\"${escaped}\">"
+    }
+
+    /**
      * Include Turbo JavaScript library.
      * Uses configuration from TurboConfig if available.
      *
@@ -313,23 +341,37 @@ class TurboTagLib implements TagLibrary {
 
     /**
      * Rails-like dom_id for a single object (see ActionView::RecordIdentifier#dom_id).
+     *
+     * @param prefixSegment Optional prefix placed before the record key ({@code dom_id(record, :edit)} → {@code edit_message_1})
      */
-    static String turboDomId(Object bean) {
+    static String turboDomId(Object bean, Object prefixSegment = null) {
         if (bean == null) {
             return null
         }
         Class<?> clazz = bean.getClass()
         String simple = clazz.getSimpleName()
-        String base = simple ?
+        String baseName = simple ?
             simple.substring(0, 1).toLowerCase(Locale.ENGLISH) + simple.substring(1) :
             'record'
+        String recordKey
         if (bean.hasProperty('id')) {
             Object idVal = bean.getProperty('id')
             if (idVal != null) {
-                return "${base}_${idVal}"
+                recordKey = "${baseName}_${idVal}"
+            } else {
+                recordKey = "new_${baseName}"
             }
+        } else {
+            recordKey = "new_${baseName}"
         }
-        return "new_${base}"
+        if (prefixSegment == null) {
+            return recordKey
+        }
+        String p = prefixSegment.toString().trim()
+        if (!p) {
+            return recordKey
+        }
+        return "${p}_${recordKey}"
     }
 
     private static String joinCompositeIds(Object idsAttr) {

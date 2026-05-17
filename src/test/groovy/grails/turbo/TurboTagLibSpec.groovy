@@ -378,6 +378,55 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         TurboTagLib.turboDomId(new FrameIdBean()) == 'new_frameIdBean'
     }
 
+    void "turboDomId with prefix matches Rails dom_id(record, segment)"() {
+        expect:
+        TurboTagLib.turboDomId(new FrameIdBean(id: 5L), 'edit') == 'edit_frameIdBean_5'
+        TurboTagLib.turboDomId(new FrameIdBean(), 'edit') == 'edit_new_frameIdBean'
+    }
+
+    void "frame tag applies prefix to bean dom id"() {
+        when:
+        def output = applyTemplate(
+            '<turbo:frame bean="${b}" prefix="modal">X</turbo:frame>',
+            [b: new FrameIdBean(id: 3L)]
+        )
+
+        then:
+        output.contains('id="modal_frameIdBean_3"')
+    }
+
+    void "visitControl tag with content"() {
+        when:
+        def output = applyTemplate('<turbo:visitControl content="advance"/>')
+
+        then:
+        output.contains('<meta name="turbo-visit-control" content="advance">')
+    }
+
+    void "visitControl defaults to reload"() {
+        when:
+        def output = applyTemplate('<turbo:visitControl/>')
+
+        then:
+        output.contains('<meta name="turbo-visit-control" content="reload">')
+    }
+
+    void "cacheControl tag"() {
+        when:
+        def output = applyTemplate('<turbo:cacheControl content="no-preview"/>')
+
+        then:
+        output.contains('<meta name="turbo-cache-control" content="no-preview">')
+    }
+
+    void "cacheControl requires content"() {
+        when:
+        applyTemplate('<turbo:cacheControl/>')
+
+        then:
+        thrown(Exception)
+    }
+
     static class FrameIdBean {
         Long id
     }

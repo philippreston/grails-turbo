@@ -2,15 +2,16 @@ package grails.turbo
 
 import grails.testing.services.ServiceUnitTest
 import grails.turbo.config.TurboConfig
+import grails.turbo.testing.RecordingTurboStreamPublisher
 import org.springframework.core.task.SyncTaskExecutor
 import spock.lang.Specification
 
 class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<TurboStreamService> {
 
-    CapturingPublisher publisher
+    RecordingTurboStreamPublisher publisher
 
     void setup() {
-        publisher = new CapturingPublisher()
+        publisher = new RecordingTurboStreamPublisher()
         service.turboStreamPublisher = publisher
         service.turboStreamTaskExecutor = new SyncTaskExecutor()
     }
@@ -23,10 +24,10 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         service.broadcastAppendTo(['room', '7'], 'messages', '<div>x</div>')
 
         then:
-        publisher.calls.size() == 1
-        publisher.calls[0].streamName == 'room:7'
-        publisher.calls[0].html.contains('action="append"')
-        publisher.calls[0].html.contains('target="messages"')
+        publisher.broadcasts.size() == 1
+        publisher.broadcasts[0].streamName == 'room:7'
+        publisher.broadcasts[0].html.contains('action="append"')
+        publisher.broadcasts[0].html.contains('target="messages"')
     }
 
     void 'broadcastAppendTo publishes canonical stream name when streamSigningSecret is set (Rails parity)'() {
@@ -37,8 +38,8 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         service.broadcastAppendTo('solo', 't', '<p/>')
 
         then:
-        publisher.calls.size() == 1
-        publisher.calls[0].streamName == 'solo'
+        publisher.broadcasts.size() == 1
+        publisher.broadcasts[0].streamName == 'solo'
     }
 
     void 'broadcastAppendLater invokes publisher asynchronously via executor'() {
@@ -49,7 +50,7 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         service.broadcastAppendLater([1, 'two'], 'x', 'y')
 
         then:
-        publisher.calls.size() == 1
+        publisher.broadcasts.size() == 1
     }
 
     void 'broadcastRenderTo sends raw turbo stream html'() {
@@ -60,7 +61,7 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         service.broadcastRenderTo(['a'], '<turbo-stream action="refresh"></turbo-stream>')
 
         then:
-        publisher.calls[0].html == '<turbo-stream action="refresh"></turbo-stream>'
+        publisher.broadcasts[0].html == '<turbo-stream action="refresh"></turbo-stream>'
     }
 
     void 'broadcastRemoveAllTo uses targets attribute'() {
@@ -71,8 +72,8 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         service.broadcastRemoveAllTo('x', '.item')
 
         then:
-        publisher.calls[0].html.contains('targets=".item"')
-        !publisher.calls[0].html.contains('target=')
+        publisher.broadcasts[0].html.contains('targets=".item"')
+        !publisher.broadcasts[0].html.contains('target=')
     }
 
     void 'blank streamables throw'() {
@@ -86,12 +87,20 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         thrown(IllegalArgumentException)
     }
 
-    static class CapturingPublisher implements TurboStreamPublisher {
-        List<Map> calls = []
+    void 'RecordingTurboStreamPublisher snapshot survives clear'() {
+        given:
+        RecordingTurboStreamPublisher rec = new RecordingTurboStreamPublisher()
 
-        @Override
-        void publish(String streamName, String turboStreamHtml) {
-            calls << [streamName: streamName, html: turboStreamHtml]
-        }
+        when:
+        rec.publish('stream-a', '<turbo-stream/>')
+        List<Map> snap = rec.snapshot()
+        rec.clear()
+
+        then:
+        snap.size() == 1
+        snap[0].streamName == 'stream-a'
+        rec.broadcasts.empty
     }
+
 }
+
