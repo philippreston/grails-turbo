@@ -40,7 +40,7 @@ class TurboStreamCableIntegrationSpec extends Specification {
 
         String jobId = UUID.randomUUID().toString()
         String streamName = TurboStreamName.fromIterable(['streamDemo', jobId], turboConfig.globalIdApp ?: 'application')
-        String signed = new TurboRailsMessageVerifier(turboConfig.streamSigningSecret.trim()).generate(streamName)
+        String signed = new TurboMessageVerifier(turboConfig.streamSigningSecret.trim()).generate(streamName)
         Map identifierMap = [channel: TurboConstants.DEFAULT_STREAMS_CHANNEL, signed_stream_name: signed]
         String identifierJson = JsonOutput.toJson(identifierMap)
         String subscribePayload = JsonOutput.toJson([command: 'subscribe', identifier: identifierJson])

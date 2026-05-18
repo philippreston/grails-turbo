@@ -196,7 +196,7 @@ class TurboTagLib implements TagLibrary {
             throwTagError('Tag [streamFrom] requires grails.plugin.turbo.streamSigningSecret (Rails Turbo.signed_stream_verifier key)')
         }
 
-        String signed = new TurboRailsMessageVerifier(signingSecret.trim()).generate(canonical)
+        String signed = new TurboMessageVerifier(signingSecret.trim()).generate(canonical)
 
         out << '<turbo-cable-stream-source channel="' << escapeAttr(channel) << '"'
         out << ' signed-stream-name="' << escapeAttr(signed) << '"'

@@ -197,7 +197,7 @@ Subscribes to Turbo Streams over Action Cable (Rails **`turbo_stream_from`** sty
 ```
 
 - **`streamables`** (required): strings and/or domain objects (see `TurboStreamName`); objects are encoded with `gid://{globalIdApp}/…` semantics.
-- Configure a non-empty **`streamSigningSecret`** (`grails.plugin.turbo`). Signing matches Rails **`ActiveSupport::MessageVerifier`** (SHA256 digest, JSON serialization); implementation is **`TurboRailsMessageVerifier`**.
+- Configure a non-empty **`streamSigningSecret`** (`grails.plugin.turbo`). Signing matches Rails **`ActiveSupport::MessageVerifier`** (SHA256 digest, JSON serialization); implementation is **`TurboMessageVerifier`**.
 - With **`enableStreams: false`**, the tag emits an HTML comment and no subscription element.
 - With **`enableStreams: true`** and **`enableActionCable: false`**, HTTP Turbo Streams still work, but **`turbo:streamFrom`** and the Action Cable meta tag are skipped; **`includeTurbo`** loads **`@hotwired/turbo`** only (no Rails cable bundle).
 - With **`enableActionCable: true`**, the plugin exposes a WebSocket endpoint (default **`/cable`**) compatible with **`@rails/actioncable`**. Use both **`enableStreams`** and **`enableActionCable`** for **`turbo-cable-stream-source`** unless you supply your own publisher.

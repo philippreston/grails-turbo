@@ -1,7 +1,7 @@
 package grails.turbo.cable
 
 import grails.turbo.TurboConstants
-import grails.turbo.TurboRailsMessageVerifier
+import grails.turbo.TurboMessageVerifier
 import grails.turbo.config.TurboConfig
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -100,7 +100,7 @@ class ActionCableWebSocketHandler extends TextWebSocketHandler {
             sendReject(session, identifier)
             return
         }
-        String canonical = new TurboRailsMessageVerifier(secret).verified(signed)
+        String canonical = new TurboMessageVerifier(secret).verified(signed)
         if (!canonical) {
             sendReject(session, identifier)
             return
