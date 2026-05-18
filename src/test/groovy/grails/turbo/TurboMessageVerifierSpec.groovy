@@ -2,7 +2,7 @@ package grails.turbo
 
 import spock.lang.Specification
 
-class TurboRailsMessageVerifierSpec extends Specification {
+class TurboMessageVerifierSpec extends Specification {
 
     /** Byte-for-byte match for Ruby ActiveSupport::MessageVerifier.new(secret, digest: SHA256, serializer: JSON).generate(...) */
     private static final String RAILS_VECTOR_SIGNED =
@@ -10,7 +10,7 @@ class TurboRailsMessageVerifierSpec extends Specification {
 
     void 'generate matches Rails 7 SHA256 JSON MessageVerifier'() {
         given:
-        TurboRailsMessageVerifier v = new TurboRailsMessageVerifier('secret')
+        TurboMessageVerifier v = new TurboMessageVerifier('secret')
 
         expect:
         v.generate('account:5:entries') == RAILS_VECTOR_SIGNED
@@ -18,7 +18,7 @@ class TurboRailsMessageVerifierSpec extends Specification {
 
     void 'verified round-trips plaintext'() {
         given:
-        TurboRailsMessageVerifier v = new TurboRailsMessageVerifier('secret')
+        TurboMessageVerifier v = new TurboMessageVerifier('secret')
 
         when:
         String signed = v.generate('hello:wired')

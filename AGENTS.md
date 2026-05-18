@@ -143,7 +143,7 @@ Use `item_${id}` pattern for entity elements (e.g., `task_123`). This appears th
 Used when rendering `.gsp` files as Turbo Stream responses (rare — usually built in controller).
 
 ### `turbo:streamFrom` (Action Cable / Turbo Streams subscriptions)
-Rails-style **`turbo-cable-stream-source`**: signed stream names for `Turbo::StreamsChannel`. Use **`streamables`** (strings and/or domain instances); names are canonicalized (`TurboStreamName`) and signed with [`TurboRailsMessageVerifier`](src/main/groovy/grails/turbo/TurboRailsMessageVerifier.groovy) (compatible with Rails `ActiveSupport::MessageVerifier`, digest **SHA256**, **JSON** serializer, same format as `Turbo.signed_stream_verifier`). Configure a non-blank **`streamSigningSecret`**; the taglib errors if it is missing. Set **`globalIdApp`** to match your app segment in `gid://` when encoding entities. Prefer **`turbo:streamFrom`**; **`turbo:cableStreamSource`** is deprecated for hand-built sources.
+Rails-style **`turbo-cable-stream-source`**: signed stream names for `Turbo::StreamsChannel`. Use **`streamables`** (strings and/or domain instances); names are canonicalized (`TurboStreamName`) and signed with [`TurboMessageVerifier`](src/main/groovy/grails/turbo/TurboMessageVerifier.groovy) (compatible with Rails `ActiveSupport::MessageVerifier`, digest **SHA256**, **JSON** serializer, same format as `Turbo.signed_stream_verifier`). Configure a non-blank **`streamSigningSecret`**; the taglib errors if it is missing. Set **`globalIdApp`** to match your app segment in `gid://` when encoding entities. Prefer **`turbo:streamFrom`**; **`turbo:cableStreamSource`** is deprecated for hand-built sources.
 
 ## Plugin Development
 

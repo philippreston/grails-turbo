@@ -9,17 +9,18 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 /**
- * Rails-compatible signed message for stream names (ActiveSupport::MessageVerifier with
- * digest SHA256, JSON serializer, non-URL-safe Base64, no metadata envelope).
+ * Signed Turbo stream names compatible with Rails {@code Turbo.signed_stream_verifier} /
+ * {@code ActiveSupport::MessageVerifier} (digest SHA256, JSON serializer,
+ * standard Base64, no metadata envelope).
  */
-final class TurboRailsMessageVerifier {
+final class TurboMessageVerifier {
 
     private static final String HMAC_SHA256 = 'HmacSHA256'
     private static final String SEPARATOR = '--'
 
     private final byte[] secret
 
-    TurboRailsMessageVerifier(String secretKey) {
+    TurboMessageVerifier(String secretKey) {
         if (!secretKey) {
             throw new IllegalArgumentException('stream signing secret must not be null or empty')
         }

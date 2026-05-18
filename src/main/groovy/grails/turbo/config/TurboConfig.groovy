@@ -48,7 +48,7 @@ class TurboConfig {
 
     /**
      * Secret for signing stream subscription names (Rails {@code Turbo.signed_stream_verifier} /
-     * {@link grails.turbo.TurboRailsMessageVerifier}: digest SHA256, JSON serializer).
+     * {@link grails.turbo.TurboMessageVerifier}: digest SHA256, JSON serializer).
      * Must be non-blank when using {@code turbo:streamFrom} (the taglib throws otherwise).
      */
     String streamSigningSecret

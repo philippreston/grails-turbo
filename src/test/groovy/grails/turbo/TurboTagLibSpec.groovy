@@ -130,7 +130,7 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
             [parts: ['myaccount', 'entries']]
         )
         String signedName = extractSignedStreamName(output)
-        String decoded = new TurboRailsMessageVerifier('secret').verified(signedName)
+        String decoded = new TurboMessageVerifier('secret').verified(signedName)
 
         then:
         output.contains('turbo-cable-stream-source channel="Turbo::StreamsChannel"')

@@ -1,7 +1,7 @@
 package grails.turbo.cable
 
 import grails.turbo.TurboConstants
-import grails.turbo.TurboRailsMessageVerifier
+import grails.turbo.TurboMessageVerifier
 import grails.turbo.config.TurboConfig
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -15,7 +15,7 @@ class ActionCableWebSocketHandlerSpec extends Specification {
         given:
         def reg = new TurboStreamSubscriptionRegistry()
         def cfg = new TurboConfig(streamSigningSecret: 'secret', enableActionCable: true, actionCablePingIntervalSeconds: 3600)
-        def v = new TurboRailsMessageVerifier('secret')
+        def v = new TurboMessageVerifier('secret')
         String signed = v.generate('chat:5')
         String identifier = JsonOutput.toJson(
             channel: TurboConstants.DEFAULT_STREAMS_CHANNEL,
