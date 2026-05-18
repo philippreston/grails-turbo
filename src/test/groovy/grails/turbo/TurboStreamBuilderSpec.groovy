@@ -140,6 +140,20 @@ class TurboStreamBuilderSpec extends Specification {
         then:
         result.contains('action="refresh"')
         !result.contains('target=')
+        !result.contains('<template>')
+        result.endsWith('</turbo-stream>')
+    }
+
+    void "test refresh with Turbo 8 request-id morph scroll"() {
+        when:
+        String result = new TurboStreamBuilder().refresh([
+            requestId: 'abc',
+            morph    : true,
+            scroll   : 'preserve'
+        ]).build()
+
+        then:
+        result == '<turbo-stream action="refresh" request-id="abc" scroll="preserve" method="morph"></turbo-stream>'
     }
 
     void "test chaining multiple actions"() {

@@ -222,10 +222,26 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
 
     void "test stream tag with refresh action"() {
         when:
-        def output = applyTemplate('<turbo:stream action="refresh" target="page"></turbo:stream>')
+        def output = applyTemplate('<turbo:stream action="refresh"></turbo:stream>')
 
         then:
         output.contains('action="refresh"')
+        !output.contains('<template>')
+        output.contains('</turbo-stream>')
+    }
+
+    void "test stream tag refresh with morph scroll and request id"() {
+        when:
+        def output = applyTemplate(
+            '<turbo:stream action="refresh" requestId="${rid}" morph="true" scroll="preserve"></turbo:stream>',
+            [rid: 'u1'])
+
+        then:
+        output.contains('action="refresh"')
+        output.contains('request-id="u1"')
+        output.contains('method="morph"')
+        output.contains('scroll="preserve"')
+        !output.contains('<template>')
     }
 
     void "test stream tag with targets attribute"() {

@@ -40,7 +40,7 @@ class ExampleController implements TurboController {
      * List messages with support for both HTML and Turbo Stream responses.
      */
     def list() {
-        redirect action: 'index'
+        redirect action: 'index', status: 303 // See Other: safe for Turbo form/method submits (parity with turbo-rails guidance)
     }
 
     /**
@@ -75,7 +75,7 @@ class ExampleController implements TurboController {
             respondWithTurbo {
                 html {
                     flash.message = "Message created successfully"
-                    redirect action: 'index'
+                    redirect action: 'index', status: 303
                 }
                 turboStream {
                     // Remove the empty state message if this is the first message
@@ -126,7 +126,7 @@ class ExampleController implements TurboController {
             respondWithTurbo {
                 html {
                     flash.message = "Message updated successfully"
-                    redirect action: 'show', id: message.id
+                    redirect action: 'show', id: message.id, status: 303
                 }
                 turboStream {
                     // Replace the message in the list
@@ -164,7 +164,7 @@ class ExampleController implements TurboController {
         respondWithTurbo {
                 html {
                     flash.message = "Message deleted successfully"
-                    redirect action: 'index'
+                    redirect action: 'index', status: 303
                 }
             turboStream {
                 // Remove the message from the list
@@ -213,7 +213,7 @@ class ExampleController implements TurboController {
         request.withFormat {
             html {
                 flash.message = "Message not found"
-                redirect action: 'index'
+                redirect action: 'index', status: 303
             }
             '*' { render status: 404 }
         }

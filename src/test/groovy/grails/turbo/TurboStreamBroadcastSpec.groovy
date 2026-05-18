@@ -64,6 +64,19 @@ class TurboStreamBroadcastSpec extends Specification implements ServiceUnitTest<
         publisher.broadcasts[0].html == '<turbo-stream action="refresh"></turbo-stream>'
     }
 
+    void 'broadcastRefreshTo passes refresh options'() {
+        given:
+        service.turboConfig = new TurboConfig()
+
+        when:
+        service.broadcastRefreshTo('room', [requestId: 'x', morph: true, scroll: 'preserve'])
+
+        then:
+        publisher.broadcasts[0].html.contains('request-id="x"')
+        publisher.broadcasts[0].html.contains('method="morph"')
+        publisher.broadcasts[0].html.contains('scroll="preserve"')
+    }
+
     void 'broadcastRemoveAllTo uses targets attribute'() {
         given:
         service.turboConfig = new TurboConfig()

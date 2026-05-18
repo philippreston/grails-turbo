@@ -139,9 +139,11 @@ class TurboStreamService {
 
     /**
      * Create a Turbo Stream to trigger a page refresh.
+     *
+     * @param opts Same keys as {@link TurboStreamBuilder#refresh(java.util.Map)} (optional {@code requestId}, {@code scroll}, {@code morph}, {@code method})
      */
-    String refresh() {
-        return builder().refresh().build()
+    String refresh(Map opts = [:]) {
+        return builder().refresh(opts ?: [:]).build()
     }
 
     // --- Broker-agnostic broadcasts (turbo-rails-style naming) ---
@@ -258,12 +260,12 @@ class TurboStreamService {
         runLater { broadcastAfterAllTo(streamables, targets, content) }
     }
 
-    void broadcastRefreshTo(Object streamables) {
-        publishStream(streamables, refresh())
+    void broadcastRefreshTo(Object streamables, Map opts = [:]) {
+        publishStream(streamables, refresh(opts ?: [:]))
     }
 
-    void broadcastRefreshLater(Object streamables) {
-        runLater { broadcastRefreshTo(streamables) }
+    void broadcastRefreshLater(Object streamables, Map opts = [:]) {
+        runLater { broadcastRefreshTo(streamables, opts ?: [:]) }
     }
 
     /**

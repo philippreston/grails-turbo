@@ -107,11 +107,60 @@ class TurboStreamBuilder {
         this
     }
 
-    TurboStreamBuilder refresh() {
+    /**
+     * Page refresh stream (Turbo 8). No {@code template} wrapper.
+     * <p>Optional {@code opts} keys (camelCase or {@code 'request-id'}): {@code requestId}, {@code scroll},
+     * {@code morph} ({@code true} → {@code method="morph"}), {@code method} (raw stream {@code method} when {@code morph} is false).</p>
+     */
+    TurboStreamBuilder refresh(Map opts = [:]) {
+        appendRefreshOpening(opts ?: [:])
+        output.append('></turbo-stream>')
+        this
+    }
+
+    private void appendRefreshOpening(Map opts) {
         output.append('<turbo-stream action="')
         output.append(esc(TurboConstants.ACTION_REFRESH))
-        output.append('"></turbo-stream>')
-        this
+        output.append('"')
+        String requestId = (opts.requestId ?: opts.'request-id')?.toString()?.trim()
+        if (requestId) {
+            output.append(' request-id="')
+            output.append(esc(requestId))
+            output.append('"')
+        }
+        String scroll = opts.scroll?.toString()?.trim()
+        if (scroll) {
+            output.append(' scroll="')
+            output.append(esc(scroll))
+            output.append('"')
+        }
+        if (truthyOpt(opts.morph)) {
+            output.append(' method="morph"')
+        } else {
+            String rawMethod = opts.method?.toString()?.trim()
+            if (rawMethod) {
+                output.append(' method="')
+                output.append(esc(rawMethod))
+                output.append('"')
+            }
+        }
+    }
+
+    private static boolean truthyOpt(Object v) {
+        if (v == null) {
+            return false
+        }
+        if (v instanceof Boolean) {
+            return (Boolean) v
+        }
+        if (v instanceof Number) {
+            return ((Number) v).intValue() != 0
+        }
+        String s = v.toString().trim()
+        if (!s || s.equalsIgnoreCase('false') || s == '0') {
+            return false
+        }
+        return true
     }
 
     /**

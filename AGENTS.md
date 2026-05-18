@@ -88,12 +88,30 @@ Accessed via injected `TurboConfig` bean. Configuration applied in plugin's `doW
 ### Multi-format responses (graceful degradation):
 ```groovy
 respondWithTurbo {
-    html { redirect action: 'list' }
+    html { redirect action: 'list', status: 303 }
     turboStream { append 'items', renderTemplate('item', [item: item]) }
     json { render item as JSON }
 }
 ```
-Format selection: checks `acceptsTurboStream()` first, then `params.format`, defaults to `html`.
+Format selection: checks `acceptsTurboStream()` first, then `params.format`, defaults to `html`. For **`html`** branches that **redirect** after a Turbo-driven form mutation, prefer **`redirect(..., status: 303)`** (See Other) so the next navigation uses **GET**—same rationale as turbo-rails / Turbo Drive conventions.
+
+### Declarative GORM broadcasts vs Rails `broadcasts`
+
+Rails **`Turbo::Broadcastable`** exposes a **`broadcasts`** class DSL (insert target, lifecycle hooks, **`broadcasts_to`**, **`renders`/partial options**) that wires Active Record callbacks for you.
+
+**This plugin intentionally keeps broadcasts explicit:** implement **`TurboBroadcastable`** and call **`turboBroadcast*`** methods from **`afterInsert`** / **`afterUpdate`** / **`beforeDelete`** (or Hibernate listeners) yourself. Reasons:
+
+1. **GORM lifecycle** differs from Rails AR (transactions, flushing, cascades).
+2. **No hidden global behavior** — you control ordering relative to validations and cascades.
+3. **Closer to “plain Groovy”** without compile-time DSL magic.
+
+If you want **Rails-like centralization**:
+
+- **`static`** rules map + **`@PostConstruct` / BootStrap** registration calling a helper that attaches listeners (explicit scan of domain classes).
+- **Grails application events**: publish domain events from GORM callbacks and subscribe with a **`@Listener`** bean that broadcasts.
+- **`AbstractRoutingDataSource`/multi-tenancy**: keep streamables explicit via **`turboBroadcastStreamables()`** per record (already supported).
+
+A future enhancement could introduce an **opt-in artifact** (e.g. annotated domains or **`static Closure turboBroadcasts`**) interpreted at startup—the above patterns are what we recommend documenting first.
 
 ### Frame-specific rendering:
 ```groovy

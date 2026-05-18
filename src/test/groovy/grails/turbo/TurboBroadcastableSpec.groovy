@@ -39,6 +39,6 @@ class TurboBroadcastableSpec extends Specification {
         bean.turboBroadcastRefresh()
 
         then:
-        1 * svc.broadcastRefreshTo([bean])
+        1 * svc.broadcastRefreshTo([bean], [:])
     }
 }
