@@ -98,6 +98,17 @@ class TurboStreamServiceSpec extends Specification implements ServiceUnitTest<Tu
         !result.contains('target=')
     }
 
+    void "test refresh forwards opts to builder"() {
+        when:
+        String result = service.refresh(scroll: 'reset', morph: true)
+
+        then:
+        result.contains('action="refresh"')
+        result.contains('scroll="reset"')
+        result.contains('method="morph"')
+        !result.contains('<template>')
+    }
+
     void "test builder allows chaining multiple actions"() {
         when:
         String result = service.builder()

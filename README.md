@@ -98,7 +98,7 @@ class MessageController implements TurboController {
         
         respondWithTurbo {
             html { 
-                redirect action: 'list' 
+                redirect action: 'list', status: 303
             }
             turboStream {
                 append 'messages', render(template: 'message', model: [message: message])
@@ -180,11 +180,13 @@ Creates a Turbo Stream element (typically used in views):
 
 **Attributes:**
 - `action` (required): `append`, `prepend`, `replace`, `update`, `remove`, `before`, `after`, `refresh`
-- `target`: Target element ID
+- `target`: Target element ID (`refresh` ignores this; Turbo does not scope refresh to an element ID)
 - `targets`: CSS selector for multiple targets
-- `morph`: when `true` on replace/update style actions, sets `method="morph"` on the element (morphing updates)
+- `morph`: on `replace` / `update`, sets `method="morph"`; on **`refresh`**, selects a morphing page refresh (`method="morph"` on the stream)
+- **`refresh` extras:** `requestId` (maps to `request-id` on the element), `scroll` (e.g. `preserve` / `reset`)
+- Other HTML attributes (`class`, `style`, `data-*`, …) pass through **except** conflicting reserved names
 
-For **`action="refresh"`**, a **`target`** (or **`targets`**) is still required by the taglib (e.g. `target="page"`).
+For **`action="refresh"`**, the tag emits **no** `<template>` body (same as **`remove`**). Optionally use `<turbo:stream action="refresh"/>`.
 
 ### turbo:streamFrom
 
@@ -254,6 +256,19 @@ class MyController implements TurboController {
 - `renderTurboStream(Closure)`: Render a Turbo Stream response
 - `respondWithTurbo(Closure)`: Respond with different formats including Turbo Streams
 
+### Redirects after Turbo form posts
+
+Turbo Drive submits forms via `fetch`. For **HTML** branches that **redirect** after POST/PUT/PATCH/DELETE, use **303 See Other** so the browser follows up with **GET** (RFC 9110 semantics; avoids repeating the mutation method). Example:
+
+```groovy
+respondWithTurbo {
+    html { redirect(action: 'index', status: 303) }
+    turboStream { /* ... */ }
+}
+```
+
+Without an explicit status, redirects may still work in common cases, but **explicit 303 matches turbo-rails best practice.**
+
 ### TurboStreamBuilder Methods
 
 When using `renderTurboStream` or `respondWithTurbo`, you have access to:
@@ -267,7 +282,8 @@ renderTurboStream {
     remove 'target-id'
     before 'target-id', '<div>Before content</div>'
     after 'target-id', '<div>After content</div>'
-    refresh() // Trigger page refresh
+    refresh()                                                     // Minimal page refresh stream
+    refresh(requestId: 'abc', morph: true, scroll: 'preserve')  // Turbo 8 extras
 }
 ```
 

@@ -95,7 +95,10 @@ class TurboTagLib implements TagLibrary {
      * @attr action REQUIRED - The action to perform: append, prepend, replace, update, remove, before, after, refresh
      * @attr target - Single element id
      * @attr targets - CSS selector for multiple targets (append_all style)
-     * @attr morph - If true on replace/update, emit {@code method="morph"} (Turbo 8)
+     * @attr morph - If true on replace/update, emit {@code method="morph"} (Turbo 8); on refresh, morphing page refresh
+     * @attr requestId - For {@code refresh}: {@code request-id} on the element
+     * @attr scroll - For {@code refresh}: {@code scroll} attribute (e.g. preserve / reset)
+     * @attr method - Optional stream {@code method} for {@code refresh} when {@code morph} is false (e.g. morph string); stripped from passthrough. Not used for other actions here.
      */
     Closure stream = { attrs, body ->
         Map m = attrs != null ? new LinkedHashMap(attrs as Map) : [:]
@@ -107,24 +110,49 @@ class TurboTagLib implements TagLibrary {
         boolean morph = truthy(m.remove('morph'))
         String target = (String) m.remove('target')
         String targets = (String) m.remove('targets')
+        Object requestIdRaw = m.remove('requestId')
+        if (requestIdRaw == null) {
+            requestIdRaw = m.remove('request-id')
+        }
+        String scroll = (String) m.remove('scroll')
+        Object streamMethod = m.remove('method')
 
-        if (!target && !targets && action != 'remove') {
+        boolean actRemove = TurboConstants.ACTION_REMOVE == action
+        boolean actRefresh = TurboConstants.ACTION_REFRESH == action
+
+        if (!target && !targets && !actRemove && !actRefresh) {
             throwTagError("Tag [stream] requires either [target] or [targets] attribute")
         }
 
         out << '<turbo-stream action="' << escapeAttr(action) << '"'
-        if (target) {
-            out << ' target="' << escapeAttr(target) << '"'
+        if (!actRefresh) {
+            if (target) {
+                out << ' target="' << escapeAttr(target) << '"'
+            }
+            if (targets) {
+                out << ' targets="' << escapeAttr(targets) << '"'
+            }
         }
-        if (targets) {
-            out << ' targets="' << escapeAttr(targets) << '"'
-        }
-        if (morph && (action == TurboConstants.ACTION_REPLACE || action == TurboConstants.ACTION_UPDATE)) {
+        if (actRefresh) {
+            if (requestIdRaw != null && requestIdRaw.toString()?.trim()) {
+                out << ' request-id="' << escapeAttr(requestIdRaw.toString().trim()) << '"'
+            }
+            if (scroll != null && scroll.trim()) {
+                out << ' scroll="' << escapeAttr(scroll.trim()) << '"'
+            }
+            if (morph) {
+                out << ' method="morph"'
+            } else if (streamMethod != null && streamMethod.toString()?.trim()) {
+                out << ' method="' << escapeAttr(streamMethod.toString().trim()) << '"'
+            }
+        } else if (morph && (TurboConstants.ACTION_REPLACE == action || TurboConstants.ACTION_UPDATE == action)) {
             out << ' method="morph"'
         }
+        writeHtmlAttributeMap(out, m)
         out << '>'
 
-        if (action != TurboConstants.ACTION_REMOVE) {
+        boolean wrapTemplate = !actRemove && !actRefresh
+        if (wrapTemplate) {
             out << '<template>'
             out << body()
             out << '</template>'

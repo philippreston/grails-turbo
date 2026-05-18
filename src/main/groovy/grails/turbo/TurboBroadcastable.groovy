@@ -22,6 +22,9 @@ import grails.util.Holders
  *     }
  * }
  * }</pre>
+ *
+ * <p>How this relates to Rails’ declarative {@code broadcasts} DSL and suggested Grails patterns for centralizing rules are documented under
+ * <strong>Declarative GORM broadcasts</strong> in AGENTS.md.</p>
  */
 trait TurboBroadcastable {
 
@@ -72,12 +75,15 @@ trait TurboBroadcastable {
         lookupTurboStreamService().broadcastRemoveLater(turboBroadcastStreamables(), target)
     }
 
-    void turboBroadcastRefresh() {
-        lookupTurboStreamService().broadcastRefreshTo(turboBroadcastStreamables())
+    /**
+     * Broadcast a Turbo {@code refresh} action to subscribers. Pass optional {@link TurboStreamBuilder#refresh(java.util.Map)} keys ({@code requestId}, {@code scroll}, {@code morph}, {@code method}).
+     */
+    void turboBroadcastRefresh(Map opts = [:]) {
+        lookupTurboStreamService().broadcastRefreshTo(turboBroadcastStreamables(), opts ?: [:])
     }
 
-    void turboBroadcastRefreshLater() {
-        lookupTurboStreamService().broadcastRefreshLater(turboBroadcastStreamables())
+    void turboBroadcastRefreshLater(Map opts = [:]) {
+        lookupTurboStreamService().broadcastRefreshLater(turboBroadcastStreamables(), opts ?: [:])
     }
 
     void turboBroadcastRender(String turboStreamHtml) {
