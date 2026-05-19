@@ -1,6 +1,7 @@
 package grails.turbo
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class TurboMessageVerifierSpec extends Specification {
 
@@ -29,5 +30,22 @@ class TurboMessageVerifierSpec extends Specification {
         decoded == 'hello:wired'
         v.validMessage(signed)
         tampered == null
+    }
+
+    @Unroll
+    void 'generate + verified round-trip for #payload with secret=#secret'() {
+        given:
+        TurboMessageVerifier v = new TurboMessageVerifier(secret)
+
+        when:
+        String signed = v.generate(payload)
+
+        then:
+        v.verified(signed) == payload
+
+        where:
+        payload        | secret
+        'a:b'          | 'x'
+        '你好:wired'   | '🔑key'
     }
 }

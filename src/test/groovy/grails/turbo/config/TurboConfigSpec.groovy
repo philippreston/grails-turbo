@@ -1,111 +1,72 @@
 package grails.turbo.config
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Test specification for TurboConfig.
  */
 class TurboConfigSpec extends Specification {
 
-    void "test default turboVersion is 8.0.4"() {
+    @Unroll
+    void "default #property is #expected"() {
         given:
         TurboConfig config = new TurboConfig()
 
         expect:
-        config.turboVersion == '8.0.4'
+        config."$property" == expected
+
+        where:
+        property                     | expected
+        'turboVersion'               | '8.0.4'
+        'cdnUrl'                     | 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'
+        'actionCablePath'            | '/cable'
+        'actionCableAllowedOrigins'  | '*'
+        'actionCablePingIntervalSeconds' | 3
+        'globalIdApp'                | 'application'
     }
 
-
-    void "test default useCdn is true"() {
+    @Unroll
+    void "default boolean #property is #expected"() {
         given:
         TurboConfig config = new TurboConfig()
 
         expect:
-        config.useCdn
+        config."$property" == expected
+
+        where:
+        property         | expected
+        'useCdn'         | true
+        'enableDrive'    | true
+        'enableFrames'   | true
+        'enableStreams'  | true
+        'enableActionCable' | true
     }
 
-    void "test default CDN URL is jsdelivr"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        expect:
-        config.cdnUrl == 'https://cdn.jsdelivr.net/npm/@hotwired/turbo'
-    }
-
-    void "test default enableDrive is true"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        expect:
-        config.enableDrive
-    }
-
-    void "test default enableFrames is true"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        expect:
-        config.enableFrames
-    }
-
-    void "test can disable drive"() {
+    @Unroll
+    void "can assign #property"() {
         given:
         TurboConfig config = new TurboConfig()
 
         when:
-        config.enableDrive = false
+        config."$property" = value
 
         then:
-        !config.enableDrive
+        config."$property" == value
+
+        where:
+        property        | value
+        'turboVersion'  | '7.3.0'
+        'cdnUrl'        | 'https://custom-cdn.com/turbo'
+        'useCdn'        | false
+        'enableDrive'   | false
+        'enableFrames'  | false
+        'enableStreams' | false
+        'streamSigningSecret' | 'k'
+        'globalIdApp'   | 'myapp'
     }
 
-
-    void "test can set custom version"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.turboVersion = '7.3.0'
-
-        then:
-        config.turboVersion == '7.3.0'
-    }
-
-    void "test can set custom CDN URL"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.cdnUrl = 'https://custom-cdn.com/turbo'
-
-        then:
-        config.cdnUrl == 'https://custom-cdn.com/turbo'
-    }
-
-
-    void "test can disable CDN usage"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.useCdn = false
-
-        then:
-        !config.useCdn
-    }
-
-    void "test can disable frames"() {
-        given:
-        TurboConfig config = new TurboConfig()
-
-        when:
-        config.enableFrames = false
-
-        then:
-        !config.enableFrames
-    }
-
-    void "test config properties are mutable"() {
+    void "config accepts multiple independent mutations"() {
         given:
         TurboConfig config = new TurboConfig()
 
@@ -125,34 +86,4 @@ class TurboConfigSpec extends Specification {
         config.cdnUrl == 'https://new-cdn.com'
         !config.useCdn
     }
-
-    void "test default enableStreams true"() {
-        expect:
-        new TurboConfig().enableStreams
-    }
-
-    void "test can set stream signing secret and global id app"() {
-        given:
-        TurboConfig c = new TurboConfig()
-
-        when:
-        c.streamSigningSecret = 'k'
-        c.globalIdApp = 'myapp'
-
-        then:
-        c.streamSigningSecret == 'k'
-        c.globalIdApp == 'myapp'
-    }
-
-    void "default action cable options"() {
-        given:
-        TurboConfig c = new TurboConfig()
-
-        expect:
-        c.enableActionCable
-        c.actionCablePath == '/cable'
-        c.actionCableAllowedOrigins == '*'
-        c.actionCablePingIntervalSeconds == 3
-    }
-
 }

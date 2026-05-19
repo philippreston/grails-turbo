@@ -3,6 +3,7 @@ package grails.turbo
 import grails.testing.web.taglib.TagLibUnitTest
 import grails.turbo.config.TurboConfig
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Test specification for TurboTagLib.
@@ -114,15 +115,6 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         thrown(Exception)
     }
 
-    void "test stream tag with morph on replace"() {
-        when:
-        def output = applyTemplate('<turbo:stream action="replace" target="a" morph="true">X</turbo:stream>')
-
-        then:
-        output.contains('method="morph"')
-        output.contains('action="replace"')
-    }
-
     void "test streamFrom produces signed turbo-cable-stream-source"() {
         when:
         def output = applyTemplate(
@@ -155,93 +147,67 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         return m.find() ? m.group(1) : ''
     }
 
-    void "test stream tag with append action"() {
+    @Unroll
+    void "stream tag action #action with target wraps template=#wraps"() {
         when:
-        def output = applyTemplate('<turbo:stream action="append" target="messages">Content</turbo:stream>')
+        String tpl = action == 'remove'
+            ? """<turbo:stream action="${action}" target="message_1"></turbo:stream>"""
+            : """<turbo:stream action="${action}" target="message_1">Content</turbo:stream>"""
+        def output = applyTemplate(tpl)
 
         then:
-        output.contains('<turbo-stream action="append" target="messages">')
-        output.contains('<template>')
-        output.contains('Content')
-        output.contains('</template>')
-        output.contains('</turbo-stream>')
-    }
-
-    void "test stream tag with prepend action"() {
-        when:
-        def output = applyTemplate('<turbo:stream action="prepend" target="messages">Content</turbo:stream>')
-
-        then:
-        output.contains('action="prepend"')
-        output.contains('target="messages"')
-    }
-
-    void "test stream tag with replace action"() {
-        when:
-        def output = applyTemplate('<turbo:stream action="replace" target="message_1">Content</turbo:stream>')
-
-        then:
-        output.contains('action="replace"')
+        output.contains("action=\"${action}\"")
         output.contains('target="message_1"')
+        wraps == output.contains('<template>')
+        extraChecks.every { output.contains(it) }
+
+        where:
+        action   | wraps | extraChecks
+        'append' | true  | ['Content']
+        'prepend'| true  | []
+        'replace'| true  | []
+        'update' | true  | []
+        'remove' | false | []
+        'before' | true  | []
+        'after'  | true  | []
     }
 
-    void "test stream tag with update action"() {
+    @Unroll
+    void "stream refresh attribute variants (#scenario)"() {
         when:
-        def output = applyTemplate('<turbo:stream action="update" target="message_1">Content</turbo:stream>')
-
-        then:
-        output.contains('action="update"')
-        output.contains('target="message_1"')
-    }
-
-    void "test stream tag with remove action"() {
-        when:
-        def output = applyTemplate('<turbo:stream action="remove" target="message_1"></turbo:stream>')
-
-        then:
-        output.contains('action="remove"')
-        output.contains('target="message_1"')
-        !output.contains('<template>')
-    }
-
-    void "test stream tag with before action"() {
-        when:
-        def output = applyTemplate('<turbo:stream action="before" target="message_1">Content</turbo:stream>')
-
-        then:
-        output.contains('action="before"')
-    }
-
-    void "test stream tag with after action"() {
-        when:
-        def output = applyTemplate('<turbo:stream action="after" target="message_1">Content</turbo:stream>')
-
-        then:
-        output.contains('action="after"')
-    }
-
-    void "test stream tag with refresh action"() {
-        when:
-        def output = applyTemplate('<turbo:stream action="refresh"></turbo:stream>')
+        def output = applyTemplate(template)
 
         then:
         output.contains('action="refresh"')
         !output.contains('<template>')
-        output.contains('</turbo-stream>')
+        expected.every { output.contains(it) }
+
+        where:
+        scenario           | template | expected
+        'minimal'          | '<turbo:stream action="refresh"></turbo:stream>' | []
+        'requestId'        | '<turbo:stream action="refresh" requestId="u1"></turbo:stream>' | ['request-id="u1"']
+        'request-id attr'  | '<turbo:stream action="refresh" request-id="u2"></turbo:stream>' | ['request-id="u2"']
+        'morph+scroll'     | '<turbo:stream action="refresh" morph="true" scroll="preserve"></turbo:stream>' | ['method="morph"', 'scroll="preserve"']
+        'raw method'       | '<turbo:stream action="refresh" method="advance"></turbo:stream>' | ['method="advance"']
     }
 
-    void "test stream tag refresh with morph scroll and request id"() {
+    @Unroll
+    void "stream tag morph on replace/update (#action) morph=#morph"() {
         when:
         def output = applyTemplate(
-            '<turbo:stream action="refresh" requestId="${rid}" morph="true" scroll="preserve"></turbo:stream>',
-            [rid: 'u1'])
+            """<turbo:stream action="${action}" target="t" morph="${morph}">X</turbo:stream>"""
+        )
 
         then:
-        output.contains('action="refresh"')
-        output.contains('request-id="u1"')
-        output.contains('method="morph"')
-        output.contains('scroll="preserve"')
-        !output.contains('<template>')
+        output.contains("action=\"${action}\"")
+        output.contains('method="morph"') == morph
+
+        where:
+        action    | morph
+        'replace' | false
+        'replace' | true
+        'update'  | false
+        'update'  | true
     }
 
     void "test stream tag with targets attribute"() {
@@ -286,28 +252,19 @@ class TurboTagLibSpec extends Specification implements TagLibUnitTest<TurboTagLi
         thrown(Exception)
     }
 
-    void "test pageRefresh tag with default method"() {
+    @Unroll
+    void "pageRefresh emits metas (#scenario)"() {
         when:
-        def output = applyTemplate('<turbo:pageRefresh/>')
+        def output = applyTemplate(template)
 
         then:
-        output.contains('<meta name="turbo-refresh-method" content="replace">')
-    }
+        expected.every { output.contains(it) }
 
-    void "test pageRefresh tag with custom method"() {
-        when:
-        def output = applyTemplate('<turbo:pageRefresh method="morph"/>')
-
-        then:
-        output.contains('content="morph"')
-    }
-
-    void "test pageRefresh tag with scroll attribute"() {
-        when:
-        def output = applyTemplate('<turbo:pageRefresh scroll="preserve"/>')
-
-        then:
-        output.contains('<meta name="turbo-refresh-scroll" content="preserve">')
+        where:
+        scenario   | template | expected
+        'defaults' | '<turbo:pageRefresh/>' | ['<meta name="turbo-refresh-method" content="replace">']
+        'morph'    | '<turbo:pageRefresh method="morph"/>' | ['content="morph"']
+        'scroll'   | '<turbo:pageRefresh scroll="preserve"/>' | ['turbo-refresh-scroll" content="preserve']
     }
 
     void "test includeTurbo tag with default version"() {
