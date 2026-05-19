@@ -3,10 +3,9 @@ package grails.turbo
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import spock.lang.Specification
+import spock.lang.Unroll
 import org.springframework.web.context.request.RequestContextHolder
 import grails.artefact.Controller
-
-import javax.servlet.http.HttpServletRequest
 
 /**
  * Test specification for TurboController trait.
@@ -27,41 +26,54 @@ class TurboControllerSpec extends Specification implements ControllerUnitTest<Te
         turboRequest.isTurboRequest()
     }
 
-    void "test isTurboRequest detects Turbo requests"() {
+    @Unroll
+    void "isTurboRequest is #expected when Turbo-Request header #scenario"() {
         given:
-        request.addHeader(TurboConstants.TURBO_REQUEST_HEADER, "1")
+        if (withHeader) {
+            request.addHeader(TurboConstants.TURBO_REQUEST_HEADER, "1")
+        }
 
         expect:
-        controller.isTurboRequest()
+        controller.isTurboRequest() == expected
+
+        where:
+        scenario        | withHeader | expected
+        'present'       | true       | true
+        'absent'        | false      | false
     }
 
-    void "test isTurboRequest returns false for non-Turbo requests"() {
+    @Unroll
+    void "frame request state #scenario"() {
+        given:
+        if (frameId) {
+            request.addHeader(TurboConstants.TURBO_FRAME_HEADER, frameId)
+        }
+
         expect:
-        !controller.isTurboRequest()
+        controller.isTurboFrameRequest() == expectFrame
+        controller.getTurboFrameId() == expectId
+
+        where:
+        scenario   | frameId      | expectFrame | expectId
+        'with id'  | 'my-frame'   | true        | 'my-frame'
+        'no header'| null         | false       | null
     }
 
-    void "test isTurboFrameRequest detects frame requests"() {
+    @Unroll
+    void "acceptsTurboStream #scenario"() {
         given:
-        request.addHeader(TurboConstants.TURBO_FRAME_HEADER, "my-frame")
+        if (accept) {
+            request.addHeader("Accept", acceptVal)
+        }
 
         expect:
-        controller.isTurboFrameRequest()
-    }
+        controller.acceptsTurboStream() == expect
 
-    void "test getTurboFrameId returns frame ID"() {
-        given:
-        request.addHeader(TurboConstants.TURBO_FRAME_HEADER, "test-frame")
-
-        expect:
-        controller.getTurboFrameId() == "test-frame"
-    }
-
-    void "test acceptsTurboStream detects stream acceptance"() {
-        given:
-        request.addHeader("Accept", TurboConstants.TURBO_STREAM_MIME_TYPE)
-
-        expect:
-        controller.acceptsTurboStream()
+        where:
+        scenario      | accept | acceptVal                                              | expect
+        'turbo Accept'| true   | TurboConstants.TURBO_STREAM_MIME_TYPE                  | true
+        'html only'   | true   | 'text/html'                                            | false
+        'no Accept'   | false  | null                                                   | false
     }
 
     void "test renderTemplate returns non-empty string when groovyPageRenderer works"() {

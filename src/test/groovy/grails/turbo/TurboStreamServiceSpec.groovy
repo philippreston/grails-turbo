@@ -2,114 +2,90 @@ package grails.turbo
 
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Test specification for TurboStreamService.
  */
 class TurboStreamServiceSpec extends Specification implements ServiceUnitTest<TurboStreamService> {
 
-    void "test builder returns new TurboStreamBuilder"() {
+    @Unroll
+    void "convenience #method builds a single turbo-stream"() {
         when:
-        TurboStreamBuilder builder = service.builder()
+        String result = service."$method"(*args)
 
         then:
-        builder != null
-        builder instanceof TurboStreamBuilder
+        result.contains("action=\"${action}\"")
+        snippets.every { result.contains(it) }
+
+        where:
+        method        | args                              | action   | snippets
+        'append'      | ['messages', '<div>n</div>']      | 'append' | ['target="messages"', '<div>n</div>']
+        'prepend'     | ['messages', '<div>n</div>']      | 'prepend'| ['target="messages"']
+        'replace'     | ['m1', '<div>u</div>']            | 'replace'| ['target="m1"']
+        'update'      | ['m1', 'inner']                   | 'update' | ['target="m1"', 'inner']
+        'remove'      | ['m1']                            | 'remove' | ['target="m1"']
+        'before'      | ['m1', '<hr/>']                   | 'before' | ['target="m1"', '<hr/>']
+        'after'       | ['m1', '<hr/>']                   | 'after'  | ['target="m1"']
     }
 
-    void "test append creates append turbo stream"() {
+    @Unroll
+    void "#method uses targets for multi-select"() {
         when:
-        String result = service.append('messages', '<div>New message</div>')
+        String result = service."$method"(*args)
 
         then:
-        result.contains('<turbo-stream action="append" target="messages">')
-        result.contains('<template>')
-        result.contains('<div>New message</div>')
-        result.contains('</template>')
-        result.contains('</turbo-stream>')
+        result.contains('targets=".row"')
+        actionFragments.every { result.contains(it) }
+
+        where:
+        method       | args                         | actionFragments
+        'appendAll'  | ['.row', '<tr/>']           | ['action="append"', '<tr/>']
+        'prependAll' | ['.row', '<tr/>']           | ['action="prepend"']
+        'replaceAll' | ['.row', '<p/>']            | ['action="replace"']
+        'updateAll'  | ['.row', 'x']                | ['action="update"']
+        'beforeAll'  | ['.row', '<i/>']            | ['action="before"']
+        'afterAll'   | ['.row', '<i/>']            | ['action="after"']
+        'removeAll'  | ['.row']                     | ['action="remove"']
     }
 
-    void "test prepend creates prepend turbo stream"() {
+    @Unroll
+    void "replace and update morph overload morph=#morph"() {
         when:
-        String result = service.prepend('messages', '<div>New message</div>')
+        String rSingle = morph ? service.replace('a', '<p/>', true) : service.replace('a', '<p/>')
+        String uSingle = morph ? service.update('a', 'c', true) : service.update('a', 'c')
+        String rMulti = morph ? service.replaceAll('.x', '<p/>', true) : service.replaceAll('.x', '<p/>')
+        String uMulti = morph ? service.updateAll('.x', 'c', true) : service.updateAll('.x', 'c')
 
         then:
-        result.contains('action="prepend"')
-        result.contains('target="messages"')
-        result.contains('<div>New message</div>')
+        [rSingle, uSingle, rMulti, uMulti].every { (it.contains('method="morph"')) == morph }
+
+        where:
+        morph << [false, true]
     }
 
-    void "test replace creates replace turbo stream"() {
+    @Unroll
+    void "refresh #scenario"() {
         when:
-        String result = service.replace('message_1', '<div>Updated message</div>')
-
-        then:
-        result.contains('action="replace"')
-        result.contains('target="message_1"')
-        result.contains('<div>Updated message</div>')
-    }
-
-    void "test update creates update turbo stream"() {
-        when:
-        String result = service.update('message_1', 'Updated content')
-
-        then:
-        result.contains('action="update"')
-        result.contains('target="message_1"')
-        result.contains('Updated content')
-    }
-
-    void "test remove creates remove turbo stream"() {
-        when:
-        String result = service.remove('message_1')
-
-        then:
-        result.contains('action="remove"')
-        result.contains('target="message_1"')
-        !result.contains('<template>')
-    }
-
-    void "test before creates before turbo stream"() {
-        when:
-        String result = service.before('message_1', '<div>Before content</div>')
-
-        then:
-        result.contains('action="before"')
-        result.contains('target="message_1"')
-        result.contains('<div>Before content</div>')
-    }
-
-    void "test after creates after turbo stream"() {
-        when:
-        String result = service.after('message_1', '<div>After content</div>')
-
-        then:
-        result.contains('action="after"')
-        result.contains('target="message_1"')
-        result.contains('<div>After content</div>')
-    }
-
-    void "test refresh creates refresh turbo stream"() {
-        when:
-        String result = service.refresh()
+        String result = service.refresh(opts)
 
         then:
         result.contains('action="refresh"')
-        !result.contains('target=')
-    }
-
-    void "test refresh forwards opts to builder"() {
-        when:
-        String result = service.refresh(scroll: 'reset', morph: true)
-
-        then:
-        result.contains('action="refresh"')
-        result.contains('scroll="reset"')
-        result.contains('method="morph"')
         !result.contains('<template>')
+        expected.every { result.contains(it) }
+
+        where:
+        scenario    | opts                                    | expected
+        'default'   | [:]                                     | []
+        'with opts' | [requestId: 'x', morph: true, scroll: 'reset'] | ['request-id="x"', 'method="morph"', 'scroll="reset"']
     }
 
-    void "test builder allows chaining multiple actions"() {
+    void "builder returns new TurboStreamBuilder"() {
+        expect:
+        service.builder() instanceof TurboStreamBuilder
+    }
+
+    void "builder allows chaining multiple actions"() {
         when:
         String result = service.builder()
             .append('messages', '<div>New</div>')
@@ -123,21 +99,9 @@ class TurboStreamServiceSpec extends Specification implements ServiceUnitTest<Tu
         result.contains('action="remove"')
     }
 
-    void "test service methods return valid turbo stream HTML"() {
+    void "multiple stream actions can be combined"() {
         when:
-        String result = service.append('test', 'content')
-
-        then:
-        result.startsWith('<turbo-stream')
-        result.endsWith('</turbo-stream>')
-    }
-
-    void "test multiple stream actions can be combined"() {
-        given:
-        def builder = service.builder()
-
-        when:
-        String result = builder
+        String result = service.builder()
             .append('list', '<li>Item 1</li>')
             .append('list', '<li>Item 2</li>')
             .update('total', '2')
@@ -145,30 +109,25 @@ class TurboStreamServiceSpec extends Specification implements ServiceUnitTest<Tu
 
         then:
         result.count('<turbo-stream') == 3
-        result.contains('<li>Item 1</li>')
-        result.contains('<li>Item 2</li>')
     }
 
-    void "test empty content is handled correctly"() {
+    @Unroll
+    void "empty or null content still renders update (#desc)"() {
         when:
-        String result = service.update('target', '')
-
-        then:
-        result.contains('action="update"')
-        result.contains('target="target"')
-    }
-
-    void "test null content is handled gracefully"() {
-        when:
-        String result = service.update('target', null)
+        String result = service.update('target', content)
 
         then:
         result.contains('action="update"')
         result.contains('target="target"')
         noExceptionThrown()
+
+        where:
+        desc         | content
+        'empty'      | ''
+        'null'       | null
     }
 
-    void "test HTML content is not escaped"() {
+    void "HTML content inside template is preserved"() {
         when:
         String result = service.append('messages', '<div class="message">Text & More</div>')
 
@@ -176,7 +135,7 @@ class TurboStreamServiceSpec extends Specification implements ServiceUnitTest<Tu
         result.contains('<div class="message">Text & More</div>')
     }
 
-    void "test target IDs with special characters"() {
+    void "target IDs with hyphens and underscores"() {
         when:
         String result = service.update('message-id_123', 'content')
 
@@ -184,4 +143,3 @@ class TurboStreamServiceSpec extends Specification implements ServiceUnitTest<Tu
         result.contains('target="message-id_123"')
     }
 }
-

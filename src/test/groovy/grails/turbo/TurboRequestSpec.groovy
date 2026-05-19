@@ -1,6 +1,7 @@
 package grails.turbo
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletRequest
 
@@ -33,82 +34,69 @@ class TurboRequestSpec extends Specification {
         !turboRequest.isTurboRequest()
     }
 
-    void "test isTurboFrameRequest returns true when frame header is present"() {
+    @Unroll
+    void "isTurboFrameRequest when frame header=#frameHeader and frames disabled=#disabled"() {
         given:
         HttpServletRequest request = Mock(HttpServletRequest)
-        request.getHeader(TurboConstants.TURBO_FRAME_HEADER) >> "my-frame"
+        request.getAttribute(TurboConstants.TURBO_FRAMES_DISABLED_ATTR) >> (disabled ? true : null)
+        request.getHeader(TurboConstants.TURBO_FRAME_HEADER) >> frameHeader
 
         when:
         TurboRequest turboRequest = new TurboRequest(request)
 
         then:
-        turboRequest.isTurboFrameRequest()
-        turboRequest.getTurboFrameId() == "my-frame"
+        turboRequest.isTurboFrameRequest() == expectFrame
+        turboRequest.getTurboFrameId() == expectId
+        turboRequest.isTurboFramesDisabled() == disabled
+
+        where:
+        frameHeader | disabled | expectFrame | expectId
+        'my-frame'  | false    | true        | 'my-frame'
+        'my-frame'  | true     | false       | null
+        null        | false    | false       | null
     }
 
-    void "test frame headers ignored when turboFramesDisabled request attribute is set"() {
+    @Unroll
+    void "acceptsTurboStream is #accepted for Accept: #acceptHeader"() {
         given:
         HttpServletRequest request = Mock(HttpServletRequest)
-        request.getAttribute(TurboConstants.TURBO_FRAMES_DISABLED_ATTR) >> true
-        request.getHeader(TurboConstants.TURBO_FRAME_HEADER) >> "my-frame"
+        request.getHeader("Accept") >> acceptHeader
+        request.getAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR) >> null
 
         when:
         TurboRequest turboRequest = new TurboRequest(request)
 
         then:
-        !turboRequest.isTurboFrameRequest()
-        turboRequest.getTurboFrameId() == null
-        turboRequest.isTurboFramesDisabled()
+        turboRequest.acceptsTurboStream() == accepted
+
+        where:
+        acceptHeader                                                               | accepted
+        TurboConstants.TURBO_STREAM_MIME_TYPE                                     | true
+        "text/html, ${TurboConstants.TURBO_STREAM_MIME_TYPE}"                     | true
+        "text/html, ${TurboConstants.TURBO_STREAM_MIME_TYPE};q=0.9, */*;q=0.1"      | true
+        'text/html, application/json'                                             | false
+        null                                                                       | false
+        'text/html'                                                                | false
     }
 
-    void "test acceptsTurboStream returns true when MIME type is in Accept header"() {
+    @Unroll
+    void "getFormat is #expect when streams disabled=#disabled and Accept streams=#accepts"() {
         given:
         HttpServletRequest request = Mock(HttpServletRequest)
-        request.getHeader("Accept") >> "text/html, ${TurboConstants.TURBO_STREAM_MIME_TYPE}"
+        request.getHeader("Accept") >> (accepts ? TurboConstants.TURBO_STREAM_MIME_TYPE : 'text/html')
+        request.getAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR) >> (disabled ? true : null)
 
         when:
         TurboRequest turboRequest = new TurboRequest(request)
 
         then:
-        turboRequest.acceptsTurboStream()
-    }
+        turboRequest.getFormat() == expect
+        turboRequest.isTurboStreamsDisabled() == disabled
 
-    void "test acceptsTurboStream returns false when MIME type is not in Accept header"() {
-        given:
-        HttpServletRequest request = Mock(HttpServletRequest)
-        request.getHeader("Accept") >> "text/html"
-
-        when:
-        TurboRequest turboRequest = new TurboRequest(request)
-
-        then:
-        !turboRequest.acceptsTurboStream()
-    }
-
-    void "test getFormat returns turbo_stream when accepts turbo stream"() {
-        given:
-        HttpServletRequest request = Mock(HttpServletRequest)
-        request.getHeader("Accept") >> TurboConstants.TURBO_STREAM_MIME_TYPE
-
-        when:
-        TurboRequest turboRequest = new TurboRequest(request)
-
-        then:
-        turboRequest.getFormat() == TurboConstants.TURBO_STREAM_FORMAT
-    }
-
-    void "test acceptsTurboStream false when turboStreamsDisabled attribute set"() {
-        given:
-        HttpServletRequest request = Mock(HttpServletRequest)
-        request.getAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR) >> true
-        request.getHeader("Accept") >> TurboConstants.TURBO_STREAM_MIME_TYPE
-
-        when:
-        TurboRequest turboRequest = new TurboRequest(request)
-
-        then:
-        !turboRequest.acceptsTurboStream()
-        turboRequest.isTurboStreamsDisabled()
-        turboRequest.getFormat() == null
+        where:
+        disabled | accepts | expect
+        false    | true    | TurboConstants.TURBO_STREAM_FORMAT
+        false    | false   | null
+        true     | true    | null
     }
 }

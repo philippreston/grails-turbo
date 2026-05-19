@@ -3,6 +3,7 @@ package grails.turbo
 import grails.testing.web.interceptor.InterceptorUnitTest
 import grails.turbo.config.TurboConfig
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Test specification for TurboInterceptor.
@@ -136,10 +137,11 @@ class TurboInterceptorSpec extends Specification implements InterceptorUnitTest<
         result
     }
 
-    void "test interceptor works with POST requests"() {
+    @Unroll
+    void "test interceptor preserves turbo attributes for #method requests"() {
         given:
         request.addHeader(TurboConstants.TURBO_REQUEST_HEADER, "1")
-        request.method = 'POST'
+        request.method = method
 
         when:
         withRequest(controller: "test", action: "create")
@@ -147,32 +149,61 @@ class TurboInterceptorSpec extends Specification implements InterceptorUnitTest<
 
         then:
         request.getAttribute('isTurboRequest') == true
+
+        where:
+        method << ['POST', 'PUT', 'DELETE', 'PATCH']
     }
 
-    void "test interceptor works with PUT requests"() {
+    @Unroll
+    void "request-scoped TurboRequest acceptsTurboStream=#expected when Accept (#scenario)"() {
+        when:
+        withRequest(controller: "test")
+        request.addHeader('Accept', accept)
+        interceptor.before()
+        TurboRequest tr = (TurboRequest) request.getAttribute('turboRequest')
+
+        then:
+        tr.acceptsTurboStream() == expected
+
+        where:
+        scenario       | accept                                                | expected
+        'turbo only'   | TurboConstants.TURBO_STREAM_MIME_TYPE                 | true
+        'mixed accept' | "text/html, ${TurboConstants.TURBO_STREAM_MIME_TYPE}" | true
+        'html only'    | 'text/html'                                           | false
+    }
+
+    void "interceptor leaves response format unchanged when already set (guards format block)"() {
         given:
-        request.addHeader(TurboConstants.TURBO_REQUEST_HEADER, "1")
-        request.method = 'PUT'
+        response.format = 'json'
 
         when:
-        withRequest(controller: "test", action: "update")
+        withRequest(controller: "test")
+        request.addHeader('Accept', TurboConstants.TURBO_STREAM_MIME_TYPE)
         interceptor.before()
 
         then:
-        request.getAttribute('isTurboRequest') == true
+        response.format == 'json'
     }
 
-    void "test interceptor works with DELETE requests"() {
+    @Unroll
+    void "when enableStreams=#enable, TurboRequest accepts turbo stream header=#accepts"() {
         given:
-        request.addHeader(TurboConstants.TURBO_REQUEST_HEADER, "1")
-        request.method = 'DELETE'
+        interceptor.turboConfig.enableStreams = enable
 
         when:
-        withRequest(controller: "test", action: "delete")
+        withRequest(controller: "test")
+        request.addHeader('Accept', TurboConstants.TURBO_STREAM_MIME_TYPE)
         interceptor.before()
+        TurboRequest tr = (TurboRequest) request.getAttribute('turboRequest')
 
         then:
-        request.getAttribute('isTurboRequest') == true
+        tr.acceptsTurboStream() == accepts
+        (request.getAttribute(TurboConstants.TURBO_STREAMS_DISABLED_ATTR) == true) == streamsDisabledAttr
+
+        where:
+        enable | accepts | streamsDisabledAttr
+        true   | true    | false
+        false  | false   | true
     }
 
     void "test interceptor marks turboStreamsDisabled when enableStreams false"() {
