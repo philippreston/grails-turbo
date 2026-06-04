@@ -5,10 +5,12 @@ import grails.turbo.pages.TurboFrameMessagesPage
 import grails.testing.mixin.integration.Integration
 import spock.lang.Timeout
 
+import java.util.concurrent.TimeUnit
+
 /**
  * Geb checks for Turbo Frame message CRUD and lazy-loaded frame on the demo page.
  */
-@Timeout(120)
+@Timeout(value = 120, unit = TimeUnit.SECONDS)
 @Integration
 class TurboFrameMessagesGebSpec extends GebIntegrationSpec {
 
@@ -26,54 +28,55 @@ class TurboFrameMessagesGebSpec extends GebIntegrationSpec {
 
         when: 'opening the turbo frame messages demo'
         to TurboFrameMessagesPage
+        waitForTurboReady()
 
         then: 'list starts empty'
-        waitFor { messageCount.text() == '0' }
+        waitForMessageCount(0)
         $('#empty-message').displayed
 
         when: 'creating the first message'
-        addMessage(firstTitle, 'First body')
+        addMessage(firstTitle, 'First body', 1)
 
         then: 'the message appears and the empty state is gone'
-        waitFor { $('h5.card-title', text: firstTitle).displayed }
         waitFor { !$('#empty-message').displayed }
-        messageCount.text() == '1'
 
         when: 'creating a second message'
-        addMessage(secondTitle, 'Second body')
+        addMessage(secondTitle, 'Second body', 2)
 
         then: 'both messages are visible'
-        waitFor { $('h5.card-title', text: secondTitle).displayed }
-        $('h5.card-title', text: firstTitle).displayed
-        messageCount.text() == '2'
+        waitForMessageTitleVisible(secondTitle)
+        messagesList.find('h5.card-title', text: firstTitle).displayed
 
         when: 'deleting the second message (by title)'
-        deleteMessageWithTitle(secondTitle)
+        deleteMessageWithTitle(secondTitle, 1)
 
         then: 'only the first message remains'
-        waitFor { $('h5.card-title', text: secondTitle).size() == 0 }
-        $('h5.card-title', text: firstTitle).displayed
-        messageCount.text() == '1'
+        messagesList.find('h5.card-title', text: firstTitle).displayed
 
         when: 'refreshing the index so the lazy frame src is bound to the surviving message'
         driver.navigate().refresh()
         waitFor { at TurboFrameMessagesPage }
-
-        then: 'turbo-frame points at lazyLoad with the surviving message id (Turbo will fetch this in the browser)'
+        waitForTurboReady()
         def survivorId = Message.withNewTransaction { Message.findByTitle(firstTitle)?.id }
+
+        then: 'turbo-frame points at lazyLoad with the surviving message id'
         survivorId != null
-        waitFor(15, 0.25) {
-            def src = lazyContentFrame.getAttribute('src')
-            src && src.contains('lazyLoad') &&
-                (src.contains("id=${survivorId}") || src.contains("/${survivorId}"))
-        }
+        waitForLazyFrameSrc(survivorId)
+
+        when: 'the lazy frame finishes loading (eager in test env; server sleeps 1s)'
+        scrollLazyFrameIntoView()
+
+        then: 'lazy-loaded copy is visible in the frame'
+        waitForLazyFrameLoaded(firstTitle)
 
         when: 'requesting the lazy-load URL directly (same response the frame receives)'
         go "/example/lazyLoad/${survivorId}"
 
         then: 'lazyLoad wraps content in a matching turbo-frame and renders the demo copy'
-        waitFor(15, 0.25) { $('turbo-frame#lazy-content').displayed }
+        waitFor(TurboFrameMessagesPage.DEFAULT_WAIT_SEC, TurboFrameMessagesPage.DEFAULT_RETRY_SEC) {
+            $('turbo-frame#lazy-content').displayed
+        }
         $('turbo-frame#lazy-content').text().contains('This content was lazy-loaded using Turbo Frames!')
-        $('h5.card-title', text: firstTitle).displayed
+        $('turbo-frame#lazy-content h5.card-title', text: firstTitle).displayed
     }
 }
