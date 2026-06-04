@@ -1,9 +1,9 @@
 # PluginManagement in settings.gradle mirrors [versions] grails and asset-pipeline (Gradle 7.6 limitation).
 [versions]
-grails = "6.2.3"
+grails = "6.2.4"
 asset-pipeline = "4.3.0"
 hibernate-core = "5.6.15.Final"
-hibernate5-gradle-plugin = "8.0.2"
+hibernate5-gradle-plugin = "8.1.1"
 selenium = "4.16.1"
 jaxb-api = "2.3.1"
 jansi = "2.4.0"

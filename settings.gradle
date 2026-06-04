@@ -6,8 +6,8 @@ pluginManagement {
     }
     plugins {
         // Keep in sync with gradle/libs.versions.toml [versions] grails and asset-pipeline
-        id "org.grails.grails-web" version "6.2.3"
-        id "org.grails.grails-gsp" version "6.2.3"
+        id "org.grails.grails-web" version "6.2.4"
+        id "org.grails.grails-gsp" version "6.2.4"
         id "com.bertramlabs.asset-pipeline" version "4.3.0"
     }
 }
