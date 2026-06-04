@@ -15,13 +15,44 @@ This plugin is inspired by [turbo-rails](https://github.com/hotwired/turbo-rails
 
 ## Installation
 
-Add the dependency in `build.gradle` (coordinates match this project’s `group` and `version` in [`gradle.properties`](gradle.properties); adjust if you consume a published artifact with different naming):
+Artifacts are published to [GitHub Packages](https://github.com/philippreston/grails-turbo/packages) (`philippreston/grails-turbo`).
+
+- **Releases** — git tags on `main` (e.g. `v0.2.0`) publish `grails.turbo:grails-turbo:<version>`.
+- **Snapshots** — each push to `main` publishes `grails.turbo:grails-turbo:<version>-SNAPSHOT` (base version from [`gradle.properties`](gradle.properties)).
+
+Add the repository and dependency in `build.gradle`:
 
 ```gradle
+repositories {
+    mavenCentral()
+    maven { url "https://repo.grails.org/grails/core/" }
+    maven {
+        url = uri('https://maven.pkg.github.com/philippreston/grails-turbo')
+        credentials {
+            username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+            password = project.findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
+        }
+    }
+}
+
 dependencies {
-    implementation 'grails.turbo:grails-turbo:0.2.0'
+    // Release (from a version tag on main)
+    implementation 'grails.turbo:grails-turbo:0.4.0'
+
+    // Or latest main branch build
+    // implementation 'grails.turbo:grails-turbo:0.4.0-SNAPSHOT'
 }
 ```
+
+For local development, set `gpr.user` and `gpr.key` in `~/.gradle/gradle.properties` (use a [personal access token](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry) with `read:packages`). Do not commit tokens to the repository.
+
+### Publishing (maintainers)
+
+1. Bump `version=` in [`gradle.properties`](gradle.properties) on `main`.
+2. Merge to `main` — the **CI** workflow runs unit and integration tests; if they pass, **Publish** runs and uploads `<version>-SNAPSHOT`.
+3. Tag `main` with `v<version>` (e.g. `v0.4.0`) — **Publish** runs only (unit tests, then release upload; tag must match `gradle.properties`; no `-SNAPSHOT` in tag names).
+
+Pull requests run **CI** tests only and do not publish packages.
 
 Register the Turbo Stream MIME type if it is not already present (the plugin also tries to register it at runtime):
 

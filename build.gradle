@@ -8,9 +8,11 @@ plugins {
     id "org.grails.grails-plugin"
     id "application"
     id "eclipse"
+    id "maven-publish"
 }
 
 group = "grails.turbo"
+version = project.findProperty('version')
 
 repositories {
     mavenCentral()
@@ -82,6 +84,52 @@ application {
 
 java {
     sourceCompatibility = JavaVersion.toVersion("17")
+}
+
+jar {
+    archiveClassifier = ''
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = 'Grails Turbo Plugin'
+                description = 'Hotwired Turbo integration for Grails applications'
+                url = 'https://github.com/philippreston/grails-turbo'
+                licenses {
+                    license {
+                        name = 'Apache License 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/philippreston/grails-turbo.git'
+                    developerConnection = 'scm:git:ssh://github.com/philippreston/grails-turbo.git'
+                    url = 'https://github.com/philippreston/grails-turbo'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/philippreston/grails-turbo')
+            credentials {
+                username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+                password = project.findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
+            }
+        }
+    }
 }
 
 tasks.withType(Test) {
