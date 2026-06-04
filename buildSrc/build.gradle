@@ -2,11 +2,13 @@ repositories {
     mavenCentral()
     maven { url "https://repo.grails.org/grails/core/" }
 }
+
 dependencies {
-    implementation("com.bertramlabs.plugins:asset-pipeline-gradle:4.3.0")
-    implementation("org.grails:grails-gradle-plugin:6.1.2")
-    implementation("org.grails.plugins:hibernate5:8.0.2")
+    implementation(libs.asset.pipeline.gradle)
+    implementation(libs.grails.gradle.plugin)
+    implementation(libs.hibernate5.gradle.plugin)
 }
+
 configurations.configureEach {
     // Needed for Gradle compatibility with Grails Gradle Plugin.
     // (Only needed when there are files in buildSrc/src/*/groovy)

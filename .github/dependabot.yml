@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      grails:
+        patterns:
+          - "org.grails*"
+          - "org.grails.plugins*"
+      selenium:
+        patterns:
+          - "org.seleniumhq.selenium*"
+    commit-message:
+      prefix: "deps"

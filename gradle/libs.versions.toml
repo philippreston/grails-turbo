@@ -1,0 +1,77 @@
+# PluginManagement in settings.gradle mirrors [versions] grails and asset-pipeline (Gradle 7.6 limitation).
+[versions]
+grails = "6.2.3"
+asset-pipeline = "4.3.0"
+hibernate-core = "5.6.15.Final"
+hibernate5-gradle-plugin = "8.0.2"
+selenium = "4.16.1"
+jaxb-api = "2.3.1"
+jansi = "2.4.0"
+el-impl = "2.2.1-b05"
+java = "17"
+
+[libraries]
+# Grails stack (versions from Grails BOM unless noted)
+grails-core = { module = "org.grails:grails-core" }
+grails-logging = { module = "org.grails:grails-logging" }
+grails-plugin-databinding = { module = "org.grails:grails-plugin-databinding" }
+grails-plugin-i18n = { module = "org.grails:grails-plugin-i18n" }
+grails-plugin-interceptors = { module = "org.grails:grails-plugin-interceptors" }
+grails-plugin-rest = { module = "org.grails:grails-plugin-rest" }
+grails-plugin-services = { module = "org.grails:grails-plugin-services" }
+grails-plugin-url-mappings = { module = "org.grails:grails-plugin-url-mappings" }
+grails-web-boot = { module = "org.grails:grails-web-boot" }
+grails-console = { module = "org.grails:grails-console" }
+grails-gorm-testing-support = { module = "org.grails:grails-gorm-testing-support" }
+grails-web-testing-support = { module = "org.grails:grails-web-testing-support" }
+grails-gradle-plugin = { module = "org.grails:grails-gradle-plugin", version.ref = "grails" }
+
+gsp = { module = "org.grails.plugins:gsp" }
+hibernate5 = { module = "org.grails.plugins:hibernate5" }
+scaffolding = { module = "org.grails.plugins:scaffolding" }
+geb = { module = "org.grails.plugins:geb" }
+
+hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "hibernate-core" }
+
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure" }
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-logging = { module = "org.springframework.boot:spring-boot-starter-logging" }
+spring-boot-starter-tomcat = { module = "org.springframework.boot:spring-boot-starter-tomcat" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket" }
+
+micronaut-inject-groovy = { module = "io.micronaut:micronaut-inject-groovy" }
+micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }
+
+asset-pipeline-grails = { module = "com.bertramlabs.plugins:asset-pipeline-grails", version.ref = "asset-pipeline" }
+asset-pipeline-gradle = { module = "com.bertramlabs.plugins:asset-pipeline-gradle", version.ref = "asset-pipeline" }
+
+h2 = { module = "com.h2database:h2" }
+jaxb-api = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb-api" }
+tomcat-jdbc = { module = "org.apache.tomcat:tomcat-jdbc" }
+jansi = { module = "org.fusesource.jansi:jansi", version.ref = "jansi" }
+el-impl = { module = "org.glassfish.web:el-impl", version.ref = "el-impl" }
+
+spock-core = { module = "org.spockframework:spock-core" }
+
+selenium-remote-driver = { module = "org.seleniumhq.selenium:selenium-remote-driver", version.ref = "selenium" }
+selenium-api = { module = "org.seleniumhq.selenium:selenium-api", version.ref = "selenium" }
+selenium-support = { module = "org.seleniumhq.selenium:selenium-support", version.ref = "selenium" }
+selenium-chrome-driver = { module = "org.seleniumhq.selenium:selenium-chrome-driver", version.ref = "selenium" }
+selenium-firefox-driver = { module = "org.seleniumhq.selenium:selenium-firefox-driver", version.ref = "selenium" }
+selenium-safari-driver = { module = "org.seleniumhq.selenium:selenium-safari-driver", version.ref = "selenium" }
+selenium-edge-driver = { module = "org.seleniumhq.selenium:selenium-edge-driver", version.ref = "selenium" }
+
+hibernate5-gradle-plugin = { module = "org.grails.plugins:hibernate5", version.ref = "hibernate5-gradle-plugin" }
+
+[bundles]
+selenium-test = ["selenium-remote-driver", "selenium-api", "selenium-support"]
+selenium-drivers = ["selenium-chrome-driver", "selenium-firefox-driver", "selenium-safari-driver", "selenium-edge-driver"]
+
+# Plugin versions are applied in settings.gradle pluginManagement (see [versions] grails, asset-pipeline).
+[plugins]
+grails-web = { id = "org.grails.grails-web", version.ref = "grails" }
+grails-gsp = { id = "org.grails.grails-gsp", version.ref = "grails" }
+grails-plugin = { id = "org.grails.grails-plugin", version.ref = "grails" }
+asset-pipeline = { id = "com.bertramlabs.asset-pipeline", version.ref = "asset-pipeline" }
